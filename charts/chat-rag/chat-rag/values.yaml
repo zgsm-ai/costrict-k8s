@@ -1,0 +1,77 @@
+# values.yaml
+
+# 应用配置
+appName: chat-rag
+containerName: chat-rag
+containerPort: 8888
+
+# 副本数
+replicaCount: 2
+
+# 镜像配置
+image:
+  repository: zgsm/chat-rag
+  pullPolicy: IfNotPresent
+  tag: "v1.1.8"
+
+# 资源限制
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "2"
+  limits:
+    memory: "8Gi"
+    cpu: "4"
+
+# 配置文件参数
+config:
+  chat-api.yaml: |
+    Name: chat-rag
+    Host: 0.0.0.0
+    Port: 8888
+
+    # Model endpoints configuration
+    LLMEndpoint: "http://higress-gateway.costrict.svc.cluster.local/v1/chat/completions"
+
+    # Token processing configuration
+    TokenThreshold: 40_000
+
+    # Semantic API configuration
+    SemanticApiEndpoint: "http://codebase-indexer-svc.costrict:8888/codebase-indexer/api/v1/search/semantic"
+    TopK: 5
+    SemanticScoreThreshold: 0.75
+
+    # Logging configuration
+    LogFilePath: "/data/logs/"
+    LokiEndpoint: "http://loki.loki.svc.cluster.local:3100/loki/api/v1/push"
+    LogScanIntervalSec: 10
+
+    # Model configuration
+    SummaryModel: "deepseek-v3"
+    SummaryModelTokenThreshold: 64_000
+    ClassifyModel: "deepseek-v3"
+
+    # Split system prompt, used to compress system prompt
+    SystemPromptSplitStr: "====\n\nRULES"
+
+    # used recent user prompt messages nums
+    RecentUserMsgUsedNums: 20
+
+    # Department configuration
+    DepartmentApiEndpoint: https://devops.sangfor.com/api/analysis/dam/work_id?work_id=
+
+# 持久化存储配置
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  size: 200Gi
+  storageClassName: "costrict-nfs"
+  mountPath: "/data"
+
+# Service 配置
+service:
+  name: chat-rag-svc
+  type: NodePort
+  port: 8888
+  targetPort: 8888

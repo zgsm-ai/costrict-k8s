@@ -1,0 +1,33 @@
+Codebase Querier Service deployed successfully!
+
+Namespace: {{ .Release.Namespace }}
+Release: {{ .Release.Name }}
+Application: {{ .Values.appName }}
+
+Service:
+  Type: {{ .Values.service.type }}
+  HTTP Port: {{ .Values.service.port }}
+  {{- if eq .Values.service.type "NodePort" }}
+  HTTP NodePort: {{ .Values.service.nodePort }}
+  HTTP Access URL: http://<NODE-IP>:{{ .Values.service.nodePort }}
+  {{- end }}
+  Metrics Port: {{ .Values.service.metricsPort }}
+
+Image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+
+Configuration:
+  Replicas: {{ .Values.replicaCount }}
+  Container Port: {{ .Values.containerPort }}
+  Metrics Port: {{ .Values.metricsPort }}
+  Resources:
+    Requests: CPU {{ .Values.resources.requests.cpu }}, Memory {{ .Values.resources.requests.memory }}
+    Limits: CPU {{ .Values.resources.limits.cpu }}, Memory {{ .Values.resources.limits.memory }}
+
+Check the pod status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app={{ .Values.appName }}
+
+View logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app={{ .Values.appName }}
+
+Access the service:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.service.name }} {{ .Values.service.port }}:{{ .Values.service.port }}

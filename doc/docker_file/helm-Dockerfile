@@ -1,0 +1,62 @@
+
+# 使用 Ubuntu 22.04 LTS 作为基础镜像
+FROM ubuntu:22.04
+
+# 设置非交互模式
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 Python3、pip、网络工具和必要依赖
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        wget \
+        python3 \
+        python3-pip \
+        iproute2 \
+        netcat-openbsd \
+        net-tools \
+        iputils-ping \
+        tar \
+        gzip \
+        bash-completion \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install -y vim
+
+# 验证 Python 和 pip
+RUN python3 --version && pip3 --version
+
+# 安装 PyYAML
+RUN pip3 install PyYAML
+
+# 定义 Helm 版本和架构
+ENV HELM_VERSION=v3.18.6
+ENV HELM_ARCH=linux-amd64
+
+# 复制 Helm 二进制文件
+COPY docker_file/linux-amd64/helm /usr/local/bin/helm && \
+    chmod +x /usr/local/bin/helm
+
+# 验证 Helm 安装
+RUN helm version --short
+
+# 设置命令行自动补全
+RUN echo 'source /usr/share/bash-completion/bash_completion' >> /etc/bash.bashrc && \
+    # 设置 kubectl 自动补全（kubectl 通过挂载方式提供）
+    echo 'source <(kubectl completion bash 2>/dev/null || echo "# kubectl completion not available")' >> /etc/bash.bashrc && \
+    echo 'alias k=kubectl' >> /etc/bash.bashrc && \
+    echo 'complete -F __start_kubectl k 2>/dev/null || true' >> /etc/bash.bashrc && \
+    # 设置 helm 自动补全
+    echo 'source <(helm completion bash)' >> /etc/bash.bashrc && \
+    echo 'alias h=helm' >> /etc/bash.bashrc && \
+    echo 'complete -F __start_helm h' >> /etc/bash.bashrc
+
+# 创建 .bashrc 配置文件（如果不存在）
+RUN echo 'export PS1="\\[\\e[32m\\]\\u@\\h:\\w\\$ \\[\\e[0m\\]"' >> /root/.bashrc && \
+    echo 'source /etc/bash.bashrc' >> /root/.bashrc
+
+# 设置工作目录
+WORKDIR /app
+
+# 默认命令：持续等待，保持容器运行（推荐方式）
+CMD ["tail", "-f", "/dev/null"]

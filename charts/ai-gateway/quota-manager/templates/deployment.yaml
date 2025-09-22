@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "quota-manager.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quota-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quota-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.containerName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        {{- toYaml .Values.command | nindent 10 }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+          name: http
+        env:
+          - name: TZ
+            value: {{ .Values.env.TZ | quote }}
+          - name: INDEX_NODE
+            value: {{ .Values.env.INDEX_NODE | quote }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: app-conf
+          mountPath: /app/conf
+      volumes:
+        - name: logs
+          emptyDir:
+            sizeLimit: {{ .Values.storage.logs.sizeLimit }}
+        - name: app-conf
+          configMap:
+            name: {{ .Values.appName }}-config

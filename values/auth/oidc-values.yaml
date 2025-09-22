@@ -1,0 +1,127 @@
+# values.yaml
+image:
+  pullPolicy: IfNotPresent
+  repository: "zgsm/oidc-auth"
+  tag: "v1.2.5"
+
+replicaCount: 1
+
+server:
+  # Port number for the server to listen on
+  serverPort: "8080"
+
+  # Base URL for the application, used for generating callbacks and redirects
+  baseURL: "http://127.0.0.1:50082"
+
+  # Intranet/Extranet access
+  isPrivate: "false"
+
+  http:
+    # Total request timeout. Format: "60s", "5m", "1h". 0 means no timeout.
+    timeout: "60s"
+
+    # Timeout for establishing a TCP connection.
+    dialTimeout: "30s"
+
+    # Interval for sending TCP keep-alive probes on active connections.
+    keepAlive: "30s"
+
+    # Timeout for the TLS handshake (for HTTPS requests).
+    tlsHandshakeTimeout: "10s"
+
+    # Timeout for waiting for the server's response headers after sending the request.
+    responseHeaderTimeout: "30s"
+
+    # --- Connection Pool Settings ---
+    # Maximum number of idle (keep-alive) connections across all hosts.
+    maxIdleConns: 2000
+
+    # Maximum number of idle (keep-alive) connections for a single host.
+    # This is a critical performance parameter for high-concurrency scenarios.
+    maxIdleConnsPerHost: 200
+
+    # Maximum time an idle connection will remain in the pool before being closed.
+    idleConnTimeout: "90s"
+
+# OAuth provider configurations for authentication
+providers:
+  casdoor:
+    # Client ID for OAuth application registration
+    clientID: "7c51a6b92dfebfa55d96"
+
+    # Client secret for OAuth application authentication
+    clientSecret: "bcb3dc222a07fad21aabdd5035dadba2f09e05d6"
+
+    # Casdoor server base URL
+    baseURL: "http://127.0.0.1:50082"
+
+    # Used to obtain tokens, etc. If provided, it is used, if not provided, the baseURL is used
+    internalURL: "http://casdoor:8000"
+encrypt:
+  aesKey: "01K49CYX4GBN0JV501K49CYX4GBN0JV5"
+  enableRsa: false
+  privateKey: ""
+  publicKey: ""
+
+# SMS service configuration for verification codes
+sms:
+  # Enable test mode. If "true", SMS won't be sent to real users.
+  enabledTest: "false"
+
+  # Application ID from the SMS provider.
+  appID: ""
+
+  # API Key from the SMS provider, used for signing requests.
+  apiKey: ""
+
+  # Merchant ID, if required by the provider.
+  mchID: "1067386"
+
+  # Pre-approved message template ID for the verification code.
+  templateID: "70300181"
+
+  # API endpoint for the send SMS action.
+  sendURL: "https://apis.shlianlu.com/sms/trade/template/send"
+
+# GitHub star synchronization configuration
+syncStar:
+  # Enable or disable star synchronization feature
+  enabled: "false"  # true / false
+
+  # GitHub personal access token for API authentication
+  personalToken: ""
+
+  # GitHub repository owner/organization name
+  owner: "zgsm-ai"
+
+  # GitHub repository name to sync stars from
+  repo: "zgsm"
+
+  # Synchronization interval in minutes
+  interval: 1  # minute
+
+# Database connection configuration
+database:
+  # Database type: "mysql" or "postgres"
+  type: "postgres"  # mysql or postgres
+
+  # Database server hostname or IP address
+  host: "postgresql"
+
+  # Database server port number
+  port: 5432
+
+  # Database username for authentication
+  username: "costrict"
+
+  # Database password for authentication
+  password: "costrict"
+
+  # Database name to connect to
+  dbname: "auth"
+
+  # Maximum number of idle connections in the pool
+  maxIdleConns: 50
+
+  # Maximum number of open connections to the database
+  maxOpenConns: 300

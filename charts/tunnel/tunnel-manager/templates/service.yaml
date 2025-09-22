@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Values.service.name }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  # pod的标签选择器
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.appName }}
+  # 暴露的端口列表
+  ports:
+    # HTTP服务端口
+    - name: http
+      port: {{ .Values.service.port }}
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP

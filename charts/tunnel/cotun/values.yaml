@@ -1,0 +1,53 @@
+# values.yaml
+
+# 应用配置
+appName: cotun
+containerName: cotun
+containerPort: 8080
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: docker.io/zgsm/cotun
+  pullPolicy: IfNotPresent
+  tag: "v0.1.0"
+
+# 资源限制
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "1"
+  limits:
+    memory: "2Gi"
+    cpu: "2"
+
+# 用户配置文件
+config:
+  users.json: |
+    {
+      "costrict:zgsm@costrict.ai": [
+        ""
+      ],
+      "foo:bar": [
+        "^0.0.0.0:3000$"
+      ],
+      "ping:pong": [
+        "^0.0.0.0:[45]000$",
+        "^example.com:80$",
+        "^R:0.0.0.0:7000$"
+      ]
+    }
+
+# Service 配置
+service:
+  name: cotun
+  type: ClusterIP
+  # 主端口配置
+  mainPort: 8080
+  # 隧道端口范围配置
+  tunnelPorts:
+    start: 30000
+    end: 40000
+    protocol: TCP

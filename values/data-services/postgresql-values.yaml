@@ -1,0 +1,133 @@
+global:
+  storageClass: "costrict-nfs"
+
+image:
+  registry: "docker.io"                
+  repository: "bitnami/postgresql"    # 镜像名称
+  tag: "17.5.0-debian-12-r20"         # 请替换为实际的 16.6.6 版本 tag
+
+auth:
+  # existingSecret: costrict-postgresql   # ❌ 注释或删除这一行
+  password: "costrict"   # ✅ 直接在这里设置密码
+  username: "costrict"               # 可选：如果需要指定用户名
+  database: "costrict"
+
+architecture: standalone
+#architecture: replication
+
+audit:
+  logTimezone: "Asia/Shanghai"
+
+primary:
+  initdb:
+    scripts:
+      # 主要是创建数据库
+      init_user_db.sql: |
+        CREATE USER costrict WITH PASSWORD 'costrict';
+        CREATE DATABASE codebase_embedder ENCODING 'UTF8';
+        CREATE DATABASE casdoor ENCODING 'UTF8';
+        CREATE DATABASE codereview ENCODING 'UTF8';
+        CREATE DATABASE auth ENCODING 'UTF8';
+        CREATE DATABASE quota_manager ENCODING 'UTF8';
+
+  extraEnvVars:
+    - name: TZ
+      value: Asia/Shanghai
+    - name: POSTGRESQL_MAX_CONNECTIONS
+      value: "1000"
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+
+  resources:
+    limits:
+      cpu: 4
+      memory: 8Gi
+    requests:
+      cpu: 2
+      memory: 4Gi
+
+  service:
+    type: NodePort
+
+  persistence:
+    enabled: true
+    size: 200Gi
+    accessModes:
+      - ReadWriteMany
+
+
+readReplicas:
+
+  replicaCount: 1
+
+  extraEnvVars:
+    - name: TZ
+      value: Asia/Shanghai
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+
+  resources:
+    limits:
+      cpu: 4
+      memory: 8Gi
+    requests:
+      cpu: 2
+      memory: 4Gi
+
+  service:
+    type: NodePort
+
+  persistence:
+    enabled: true
+    size: 100Gi
+    accessModes:
+      - ReadWriteMany
+
+backup:
+  enabled: true
+  cronjob:
+    timeZone: Asia/Shanghai
+    schedule: "0 0 * * *"
+    successfulJobsHistoryLimit: 1
+    storage:
+      enabled: true
+      size: 50Gi
+      accessModes:
+        - ReadWriteMany
+
+volumePermissions:
+  enabled: true
+
+metrics:
+  enabled: true
+
+  serviceMonitor:
+    enabled: false

@@ -1,0 +1,28 @@
+# templates/configmap.yaml
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.reviewManager.appName }}-config
+  namespace: {{ .Release.Namespace }} # 这会自动填充
+data:
+  {{- toYaml .Values.reviewManager.config | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.issueManager.appName }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- toYaml .Values.issueManager.config | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.reviewChecker.appName }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- toYaml .Values.reviewChecker.config | nindent 2 }}

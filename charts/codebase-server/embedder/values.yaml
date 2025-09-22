@@ -1,0 +1,148 @@
+# values.yaml
+
+# 应用配置
+appName: codebase-embedder
+containerName: codebase-embedder
+containerPort: 8888
+metricsPort: 6060
+
+# 副本数
+replicaCount: 3
+
+# 镜像配置
+image:
+  repository: zgsm/codebase-embedder
+  pullPolicy: IfNotPresent
+  tag: "v0.1.0"
+
+# 资源限制
+resources:
+  requests:
+    cpu: "4"
+    memory: 8Gi
+  limits:
+    cpu: "8"
+    memory: 16Gi
+
+# 配置文件参数
+config:
+  conf.yaml: |
+    Name: codebase-embedder
+    Host: 0.0.0.0
+    Port: 8888
+    Timeout: 120000 #ms
+    MaxConns: 500
+    MaxBytes: 104857600 # 100MB
+    DevServer:
+      Enabled: true
+    Verbose: false
+    Mode: test # dev,test,rt,pre, pro
+      
+    Auth:
+      UserInfoHeader: "x-userinfo"
+    Database:
+      Driver: postgres
+      DataSource: postgres://costrict:costrict@postgresql:5432/codebase_embedder?sslmode=disable
+      AutoMigrate:
+        enable: true    
+    IndexTask:
+      PoolSize: 1000
+      QueueSize: 100
+      LockTimeout: 10s
+      EmbeddingTask:
+        PoolSize: 20
+        MaxConcurrency: 10
+        Timeout: 18000s
+        OverlapTokens: 100
+        MaxTokensPerChunk: 1000
+        EnableMarkdownParsing: false
+      GraphTask:
+        MaxConcurrency: 100
+        Timeout: 18000s
+        ConfFile: "etc/codegraph.yaml"
+    
+    Cleaner:
+      Cron: "0 0 * * *"
+      CodebaseExpireDays: 30
+    
+    Redis:
+      Addr: redis-master:6379
+      DefaultExpiration: 1h
+    
+    VectorStore:
+      Type: weaviate
+      Timeout: 60s
+      MaxRetries: 5
+      StoreSourceCode: false
+      FetchSourceCode: true
+      BaseURL: http://codebase-querier-svc:8888/codebase-indexer/api/v1/snippets/read
+      Weaviate:
+        MaxDocuments: 20
+        Endpoint: "weaviate:80"
+        BatchSize: 100
+        ClassName: "CodebaseIndex"
+      Embedder:
+        Timeout: 30s
+        MaxRetries: 3
+        BatchSize: 10
+        StripNewLines: true
+        Model: gte-modernbert-base
+        ApiKey: ""
+        ApiBase: http://172.16.254.5:32326/v1/embeddings
+      Reranker:
+        Timeout: 10s
+        MaxRetries: 3
+        Model: gte-reranker-modernbert-base
+        ApiKey: ""
+        ApiBase:  http://172.16.254.5:32323/v1/rerank
+    
+    Log:
+      Mode: console # console,file,volume
+      ServiceName: "codebase-embedder"
+      Encoding: plain # json,plain
+      Path: "/app/logs"
+      Level: info # debug,info,error,severe
+      KeepDays: 7
+      MaxSize: 100 # MB per file, take affect when Rotation is size.
+      Rotation: daily # split by day or size
+    Validation:
+      enabled: true
+      check_content: true
+      fail_on_mismatch: false
+      log_level: "info"
+      max_concurrency: 5
+      skip_patterns: []
+    TokenLimit:
+      max_running_tasks: 100  
+      enabled: true 
+    HealthCheck:
+      Enabled: true
+      URL: http://codebase-querier-svc.costrict:8888/codebase-indexer/api/v1/index/summary
+      Timeout: 3s
+
+
+# Service 配置
+service:
+  name: codebase-embedder-svc
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888
+    - name: metrics
+      port: 6470
+      targetPort: 6060
+
+# 环境变量配置
+env:
+  - name: TZ
+    value: Asia/Shanghai
+  - name: INDEX_NODE
+    value: "1"
+
+# 健康检查配置
+livenessProbe:
+  tcpSocket:
+    port: 8888
+  initialDelaySeconds: 15
+  periodSeconds: 20

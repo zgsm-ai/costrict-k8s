@@ -1,0 +1,151 @@
+# 部署配置文件
+# 将 out/ 目录下的 chart 文件与 values/ 目录下的配置文件对应
+global:
+  # 全局namespace,每个服务可以自定义.
+  namespace: costrict
+  # set 可以用于全局helm Set
+  set: ""
+
+data-services:
+  postgresql:
+    values: postgresql-values.yaml
+    chart: postgresql-16.6.6.tgz
+    # storageClass，由于比较重要，直接从set中提出来，单独作为配置项
+    # 由于不同helm包的key不一致或者会配置多个sc，此处通过key:value来配置。
+    storageClass:
+      "global.storageClass": "nfs-storage"
+  redis:
+    values: redis-values.yaml
+    chart: redis-20.3.0.tgz
+    storageClass:
+      "global.storageClass": "nfs-storage"
+    
+  weaviate:
+    chart: weaviate-17.4.5.tgz
+    values: weaviate-values.yaml
+    storageClass:
+      "storage.storageClassName": "nfs-storage"
+    
+
+tunnel:
+  tunnel-manager:
+    chart: tunnel-manager-0.1.0.tgz
+    values: tunnel-manager-values.yaml
+    storageClass:
+      "persistence.storageClassName": "nfs-storage"
+    set:
+      "image.repository": "docker.io/zgsm/tunnel-manager"
+      "image.tag": "v0.2.4"
+  cotun:
+    # 可以移动到其他命名空间,但是需要修改配置文件.
+    # namespace: costrict-cotun-test
+    chart: cotun-0.1.0.tgz
+    values: cotun-values.yaml
+    set:
+      "image.repository": "docker.io/zgsm/cotun"
+      "image.tag": "v1.1.0"
+
+ai-gateway:
+  higress:
+    values: higress-values.yaml
+    chart: higress-2.1.6.tgz
+    storageClass:
+      "higress-console.o11y.prometheus.pvc.storageClassName": "nfs-storage"
+      "higress-console.o11y.grafana.pvc.storageClassName": "nfs-storage"
+      "higress-console.o11y.loki.pvc.storageClassName": "nfs-storage"
+
+  quota-manager:
+    chart: quota-manager-0.1.0.tgz
+    values: quota-manager-values.yaml
+    set:
+      "image.repository": "zgsm/quota-manager"
+      "image.tag": "1.0.22"
+  quota-manager-frontend:
+    chart: quota-manager-frontend-0.1.0.tgz
+    values: quota-manager-frontend-values.yaml
+    set:
+      "image.repository": "zgsm/quota-manager-frontend"
+      "image.tag": "1.0.8"
+
+auth:
+  apisix:
+    chart: apisix-2.11.2.tgz
+    values: apisix-values.yaml
+    storageClass:
+      "etcd.persistence.storageClass": "nfs-storage"
+  casdoor:
+    chart: casdoor-helm-charts-v1.947.0.tgz
+    values: casdoor-values.yaml
+  oidc-auth:
+    chart: oidc-auth-1.0.0.tgz
+    values: oidc-values.yaml
+    set:
+      "image.repository": "zgsm/oidc-auth"
+      "image.tag": "v1.2.5"
+
+chat-rag:
+  chat-rag:
+    chart: chat-rag-0.1.0.tgz
+    values: chat-rag-values.yaml
+    storageClass:
+      "persistence.storageClassName": "nfs-storage"
+    set:
+      "image.repository": "zgsm/chat-rag"
+      "image.tag": "v1.1.8"
+
+code-completions:
+  code-completions:
+    chart: code-completions-0.1.0.tgz
+    values: code-completions-values.yaml
+    set:
+      "image.repository": "zgsm/code-completions"
+      "image.tag": "1.6.4"
+    
+code-review:
+  code-review:
+    chart: code-review-0.1.0.tgz
+    values: code-review-values.yaml
+    set: 
+      "reviewManager.image.repository": "zgsm/review-manager"
+      "reviewManager.image.tag": "hotfix-v2"
+      "reviewWorker.image.repository": "zgsm/review-manager"
+      "reviewWorker.image.tag": "hotfix-v2"
+      "issueManager.image.repository": "zgsm/issue-manager"
+      "issueManager.image.tag": "hotfix-v1"
+      "reviewChecker.image.repository": "zgsm/review-checker"
+      "reviewChecker.image.tag": "1.1.2"
+
+      
+
+codebase-server:
+  codebase-embedder:
+    chart: codebase-embedder-0.1.0.tgz
+    values: embedder-values.yaml
+    set:
+      "image.repository": "zgsm/codebase-embedder"
+      "image.tag": "v0.1.1"
+  codebase-querier:
+    chart: codebase-querier-0.1.0.tgz
+    values: querier-values.yaml
+    set:
+      "image.repository": "zgsm/codebase-querier"
+      "image.tag": "v0.1.5"
+
+
+frontend:
+  credit-manager:
+    chart: credit-manager-1.0.0.tgz
+    values: credit-manager-values.yaml
+    set:
+      "image.repository": "zgsm/credit-manager"
+      "image.tag": "v1.1.6"
+
+portal:
+  portal:
+    chart: portal-0.1.0.tgz
+    values: portal-values.yaml
+    storageClass:
+      "persistence.storageClassName": "nfs-storage"
+    set:
+      "image.repository": "docker.io/library/nginx"
+      "image.tag": "1.27.1"

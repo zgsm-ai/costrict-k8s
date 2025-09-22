@@ -1,0 +1,41 @@
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.containerName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/etc/chat-api.yaml
+              subPath: chat-api.yaml
+            - name: pvc-storage
+              mountPath: {{ .Values.persistence.mountPath }}
+          args: ["-f", "/app/etc/chat-api.yaml"]
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.appName }}-config
+            items:
+              - key: chat-api.yaml
+                path: chat-api.yaml
+        - name: pvc-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.appName }}-storage

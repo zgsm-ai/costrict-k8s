@@ -1,0 +1,98 @@
+# values.yaml
+
+# 应用配置
+appName: "quota-manager"
+serviceName: "quota-manager-svc"
+containerName: "quota-manager"
+containerPort: 8080
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: "zgsm/quota-manager"
+  pullPolicy: IfNotPresent
+  tag: "1.0.21"
+
+# 命令配置
+command:
+  - /app/quota-manager
+  - -c
+  - /app/conf/conf.yaml
+
+# 资源限制
+resources:
+  requests:
+    cpu: "4"
+    memory: 8Gi
+  limits:
+    cpu: "8"
+    memory: 16Gi
+
+# 环境变量
+env:
+  TZ: "Asia/Shanghai"
+  INDEX_NODE: "0"
+  DB_PASSWORD: ""
+
+# 配置文件参数
+config:
+  conf.yaml: |
+    database:
+      host: "postgresql"
+      port: 5432
+      user: "costrict"
+      password: "costrict"
+      dbname: "quota_manager"
+      sslmode: "disable"
+
+    auth_database:
+      host: "postgresql"
+      port: 5432
+      user: "costrict"
+      password: "costrict"
+      dbname: "auth"
+      sslmode: "disable"
+
+    aigateway:
+      host: "higress-gateway"
+      port: 80
+      admin_path: "/v1/chat/completions/quota"
+      auth_header: "x-admin-key"
+      auth_value: "12345678"
+
+    server:
+      port: 8080
+      mode: "release"
+      token_header: "authorization"
+
+    scheduler:
+      scan_interval: "0 * * * * *" # Scan every hour
+
+    voucher:
+      signing_key: ""
+
+    github_star_check:
+      enabled: false
+      required_repo: "zgsm-ai.costrict"
+
+    log:
+      level: "warn"
+      stdout_only: true
+
+# 存储配置
+storage:
+  logs:
+    sizeLimit: 5Gi
+
+# Service 配置
+service:
+  type: NodePort
+  port: 8080
+  targetPort: 8080
+
+# 健康检查配置
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 20

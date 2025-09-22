@@ -1,0 +1,33 @@
+# Default values for portal chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: "docker.io/library/nginx"
+  tag: "1.27.1"
+  pullPolicy: IfNotPresent
+
+# 环境变量
+env:
+  TZ: "Asia/Shanghai"
+
+# 容器端口
+containerPort: 80
+
+# Service 配置
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 80
+
+# PVC 配置
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  storage: 1Gi
+  storageClassName: ""

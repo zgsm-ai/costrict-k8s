@@ -1,0 +1,139 @@
+# weaviate-values.yaml
+# 基于 Weaviate 官方 Helm Chart (weaviate/weaviate) 的正确配置
+
+# ===================================
+# 镜像配置
+# ===================================
+image:
+  registry: "docker.io"
+  repo: semitechnologies/weaviate
+  tag: 1.30.0
+  pullPolicy: IfNotPresent
+
+# ===================================
+# 存储配置 (PVC)
+# ===================================
+# 注意：字段是 storage，不是 persistence
+storage:
+  size: 100Gi
+  # ✅ 正确字段：storageClassName
+  storageClassName: "costrict-nfs"
+  # accessModes 由 StatefulSet 自动生成，默认为 ReadWriteOnce
+  # 如果需要 ReadWriteMany，需通过 volumeClaimTemplates 覆盖（见下方）
+
+# ===================================
+# Weaviate 运行时配置 (通过环境变量)
+# ===================================
+# 所有 Weaviate 配置都通过 env 字段设置
+env:
+  # 数据存储路径
+  PERSISTENCE_DATA_PATH: /var/lib/weaviate
+  # 查询默认 limit
+  QUERY_DEFAULTS_LIMIT: 25
+  # 匿名访问
+  AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+  # Raft 端口（可选）
+  CLUSTER_GOSSIP_BIND_PORT: 7000
+  CLUSTER_DATA_BIND_PORT: 7001
+  # 其他环境变量...
+  GOGC: 100
+  QUERY_MAXIMUM_RESULTS: 100000
+  ASYNC_INDEXING: true
+
+# ===================================
+# 资源限制
+# ===================================
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "1000m"
+
+# ===================================
+# 服务配置 (Service)
+# ===================================
+service:
+  name: weaviate
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP  # 你想要 ClusterIP
+
+# gRPC 服务（可选关闭）
+grpcService:
+  enabled: true
+  name: weaviate-grpc
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+  type: ClusterIP
+
+# ===================================
+# 副本数（StatefulSet）
+# ===================================
+replicas: 1
+
+# ===================================
+# Init Containers
+# ===================================
+initContainers:
+  sysctlInitContainer:
+    enabled: false
+  ensureFileOwnershipContainer:
+    enabled: false
+
+# ===================================
+# 如果需要 ReadWriteMany，必须使用 volumeClaimTemplates 覆盖
+# 因为默认的 storage 字段生成的 PVC 是 ReadWriteOnce
+# ===================================
+# volumeClaimTemplates:
+#   - metadata:
+#       name: data
+#     spec:
+#       storageClassName: "costrict-nfs"
+#       accessModes:
+#         - ReadWriteMany
+#       resources:
+#         requests:
+#           storage: 100Gi
+
+# ===================================
+# 健康检查（可选调整）
+# ===================================
+readinessProbe:
+  initialDelaySeconds: 3
+  periodSeconds: 10
+  failureThreshold: 3
+
+livenessProbe:
+  initialDelaySeconds: 900
+  periodSeconds: 10
+  failureThreshold: 30
+
+# ===================================
+# 节点调度（可选）
+# ===================================
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ===================================
+# 指标监控
+# ===================================
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+
+# ===================================
+# 安全上下文（可选）
+# ===================================
+# containerSecurityContext:
+#   runAsUser: 1000
+#   runAsGroup: 1000
+#   fsGroup: 1000

@@ -1,0 +1,66 @@
+name: Release Helm Charts
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-charts:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    permissions:
+      contents: write
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+        
+    - name: Run Helm packaging script
+      run: python package_helm_charts.py
+      
+    - name: Create all.tar from tgz files
+      run: |
+        cd out
+        tar -cvf all.tar */
+        
+    - name: Create all.zip from tgz files
+      run: |
+        cd out
+        zip -r all.zip */
+        
+    - name: Read release template
+      id: read-template
+      run: |
+        content=$(cat .github/release-template.md)
+        echo "release_body<<EOF" >> $GITHUB_OUTPUT
+        echo "$content" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          out/all.tar
+          out/all.zip
+          out/*/*.tgz
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: ${{ steps.read-template.outputs.release_body }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,61 @@
+# templates/service.yaml
+
+{{- if .Values.reviewManager.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.reviewManager.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.reviewManager.appName }}
+spec:
+  type: {{ .Values.reviewManager.service.type }}
+  ports:
+    - port: {{ .Values.reviewManager.service.port }}
+      targetPort: {{ .Values.reviewManager.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.reviewManager.appName }}
+{{- end }}
+
+{{- if .Values.issueManager.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.issueManager.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.issueManager.appName }}
+spec:
+  type: {{ .Values.issueManager.service.type }}
+  ports:
+    - port: {{ .Values.issueManager.service.port }}
+      targetPort: {{ .Values.issueManager.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.issueManager.appName }}
+{{- end }}
+
+{{- if .Values.reviewChecker.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.reviewChecker.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.reviewChecker.appName }}
+spec:
+  type: {{ .Values.reviewChecker.service.type }}
+  ports:
+    - port: {{ .Values.reviewChecker.service.port }}
+      targetPort: {{ .Values.reviewChecker.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.reviewChecker.appName }}
+{{- end }}

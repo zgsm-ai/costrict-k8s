@@ -1,0 +1,61 @@
+# values.yaml
+global:
+  # 用于配置ingress资源，防止重名冲突
+  ingressClass: costrcit-ingress
+
+# 启用 higress-console
+higress-console:
+  enabled: true
+  service:
+    type: NodePort  # 或 LoadBalancer，根据需要
+  image:
+    repository: zgsm/higress-console
+    pullPolicy: IfNotPresent
+    tag: "2.1.6"
+  # 可观测性组件（Prometheus, Grafana, Loki）
+  o11y:
+    enabled: true
+
+    prometheus:
+      enabled: true
+      image:
+        repository: zgsm/higress-prometheus
+        tag: v2.40.7
+      pvc:
+        enabled: true
+        storageClassName: costrict-nfs
+        size: 20Gi  # 建议指定大小
+
+    grafana:
+      enabled: true
+      image:
+        repository: zgsm/higress-grafana
+        tag: 9.3.6
+      pvc:
+        enabled: true
+        storageClassName: costrict-nfs
+        size: 10Gi
+
+    loki:
+      enabled: true
+      image:
+        repository: zgsm/higress-loki
+        tag: 2.9.4
+      pvc:
+        enabled: true
+        storageClassName: costrict-nfs
+        size: 10Gi
+
+higress-core:
+  gateway:
+    hub: zgsm
+    image: "higress-gateway"
+    tag: "2.1.6"
+  controller:
+    hub: zgsm
+    image: "higress-higress"
+    tag: "2.1.6"
+  pilot:
+    hub: zgsm
+    image: "higress-pilot"
+    tag: "2.1.6"

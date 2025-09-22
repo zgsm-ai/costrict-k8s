@@ -1,0 +1,56 @@
+name: Manual Package Helm Charts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package-charts:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+        
+    - name: Run Helm packaging script
+      run: python package_helm_charts.py
+        
+    - name: Create all.tar from tgz files
+      run: |
+        cd out
+        tar -cvf all.tar */
+        
+    - name: Create all.zip from tgz files
+      run: |
+        cd out
+        zip -r all.zip */
+        
+    - name: Upload artifacts for download
+      uses: actions/upload-artifact@v4
+      with:
+        name: helm-charts-package
+        path: |
+          out/all.tar
+          out/all.zip
+          out/*/*.tgz
+        retention-days: 7
+        
+    - name: Display package information
+      run: |
+        echo "=== 打包完成 ==="
+        echo "打包的文件："
+        ls -la out/
+        echo ""
+        echo "请在上面的 'Artifacts' 部分下载打包文件"
+        echo "文件将在 7 天后自动删除"

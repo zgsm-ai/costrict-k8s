@@ -1,0 +1,24 @@
+Cotun tunnel service has been deployed successfully!
+
+1. Get the application URL by running these commands:
+{{- if eq .Values.service.type "LoadBalancer" }}
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.service.name }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo http://$SERVICE_IP:{{ .Values.containerPort }}
+{{- else if eq .Values.service.type "NodePort" }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service.name }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if eq .Values.service.type "ClusterIP" }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Values.appName }}" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:{{ .Values.containerPort }}
+{{- end }}
+
+2. Check the deployment status:
+   kubectl get pods --namespace {{ .Release.Namespace }} -l app={{ .Values.appName }}
+
+3. View the logs:
+   kubectl logs --namespace {{ .Release.Namespace }} -l app={{ .Values.appName }} -f
+
+4. Access the service:
+   The service is available at: {{ .Values.service.name }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}

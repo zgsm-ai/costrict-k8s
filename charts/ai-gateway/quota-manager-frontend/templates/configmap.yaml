@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  # Frontend environment configuration
+  app.config.js: |
+    // Production environment configuration
+    window.APP_CONFIG = {
+      // API configuration
+      api: {
+        baseURL: '{{ .Values.appConfig.api.baseURL }}',
+        timeout: {{ .Values.appConfig.api.timeout }},
+        enableMock: {{ .Values.appConfig.api.enableMock }}
+      },
+
+      // Application configuration
+      app: {
+        name: '{{ .Values.appConfig.app.name }}',
+        version: '{{ .Values.appConfig.app.version }}',
+        description: '{{ .Values.appConfig.app.description }}',
+        author: '{{ .Values.appConfig.app.author }}'
+      },
+
+      // Feature configuration
+      features: {
+        userAudit: {{ .Values.appConfig.features.userAudit }},
+        strategyManagement: {{ .Values.appConfig.features.strategyManagement }},
+        settings: {{ .Values.appConfig.features.settings }},
+        realTimeMonitoring: {{ .Values.appConfig.features.realTimeMonitoring }}
+      },
+
+      // Theme configuration
+      theme: {
+        primaryColor: '{{ .Values.appConfig.theme.primaryColor }}',
+        layout: '{{ .Values.appConfig.theme.layout }}'
+      }
+    };

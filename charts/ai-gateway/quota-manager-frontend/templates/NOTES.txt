@@ -1,0 +1,24 @@
+Quota Manager Frontend 已成功部署！
+
+1. 获取访问地址：
+   export NODE_PORT=$(kubectl get --namespace {{ .Values.namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service.name }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Values.namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo http://$NODE_IP:$NODE_PORT
+
+2. 检查部署状态：
+   kubectl get pods --namespace {{ .Values.namespace }} -l app={{ .Values.appName }}
+
+3. 查看日志：
+   kubectl logs --namespace {{ .Values.namespace }} -l app={{ .Values.appName }}
+
+4. 配置信息：
+   - 命名空间: {{ .Values.namespace }}
+   - 应用名称: {{ .Values.appName }}
+   - 服务名称: {{ .Values.service.name }}
+   - 副本数: {{ .Values.replicaCount }}
+   - 镜像版本: {{ .Values.image.tag }}
+
+5. 前端配置文件已通过 ConfigMap 挂载到 /usr/share/nginx/html/config/app.config.js
+
+6. 如需修改配置，请编辑 values.yaml 文件并重新部署：
+   helm upgrade {{ .Release.Name }} . --namespace {{ .Values.namespace }}

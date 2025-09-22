@@ -1,0 +1,78 @@
+# https://charts.bitnami.com/bitnami/redis-20.3.0.tgz 
+global:
+  timezone: "Asia/Shanghai"
+  imageRegistry: ""
+  imagePullPolicy: "IfNotPresent"
+  storageClass: "costrict-nfs"
+
+
+architecture: standalone # replication
+
+
+auth:
+  enabled: false
+  sentinel: false
+
+master:
+
+  count: 1
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    successThreshold: 1
+    failureThreshold: 5
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    successThreshold: 1
+    failureThreshold: 5
+
+  persistence:
+    enabled: true
+    size: 50Gi
+    accessModes:
+      - ReadWriteMany
+
+  volumePermissions:
+    enabled: true
+  # 关键：直接注入 redis.conf 片段
+  configuration: |
+    # ---------- RDB ----------
+    save 900 1
+    save 300 10
+    save 60 10000
+    dbfilename dump.rdb
+    # ---------- AOF ----------
+    appendonly yes
+    appendfsync everysec
+    aof-use-rdb-preamble yes
+    # ---------- AOF 重写 ----------
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    # ---------- 内存 ---------- 建议和resource对比清楚
+    maxmemory 6gb
+    maxmemory-policy allkeys-lru
+
+
+  resources:
+    requests:
+      cpu: 2
+      memory: 4Gi
+    limits:
+      cpu: 4
+      memory: 8Gi
+
+  extraEnvVars:
+  - name: TZ
+    value: Asia/Shanghai
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false

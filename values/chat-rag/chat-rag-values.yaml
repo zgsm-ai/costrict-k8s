@@ -1,0 +1,92 @@
+# values.yaml
+
+# 应用配置
+appName: chat-rag
+containerName: chat-rag
+containerPort: 8888
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: zgsm/chat-rag
+  pullPolicy: IfNotPresent
+  tag: "v1.1.8"
+
+
+# 资源限制
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "2"
+  limits:
+    memory: "8Gi"
+    cpu: "4"
+
+# 配置文件参数
+config:
+  chat-api.yaml: |
+    Name: chat-rag
+    Host: 0.0.0.0
+    Port: 8888
+
+    # Token processing configuration
+    TokenThreshold: 100_000
+
+    # Logging configuration
+    Log:
+      LogFilePath: "/data/logs/"
+      LokiEndpoint: "http://loki.loki.svc.cluster.local:3100/loki/api/v1/push"
+      LogScanIntervalSec: 10
+      EnableClassification: false
+
+    # Model configuration
+    SummaryModel: "glm45-fp8"
+    SummaryModelTokenThreshold: 64_000
+    ClassifyModel: "gpt-oss-120b"
+
+    # Split system prompt, used to compress system prompt
+    SystemPromptSplitStr: "====\n\nRULES"
+
+    # used recent user prompt messages nums
+    RecentUserMsgUsedNums: 20
+
+    # Department configuration
+    DepartmentApiEndpoint: https://devops.sangfor.com/api/analysis/dam/work_id?work_id=
+
+    # Models supported by function calling
+    LLM:
+      Endpoint: "http://higress-gateway/v1/chat/completions"
+      # Endpoint: "http://10.233.35.114/v1/chat/completions"
+
+    Redis:
+      Addr: "costrict-redis-master:6379"
+
+    # Semantic API configuration
+    Tools:
+      SemanticSearch:
+        SearchEndpoint: "http://codebase-querier-svc:8888/codebase-embedder/api/v1/search/semantic"
+        ApiReadyEndpoint: "http://codebase-querier-svc:8888/codebase-embedder/api/v1/embeddings/summary"
+        TopK: 50
+        ScoreThreshold: 0.7
+      ReferenceSearch:
+        SearchEndpoint: "http://codebase-querier-svc:8888/codebase-indexer/api/v1/search/reference"
+        ApiReadyEndpoint: "http://codebase-querier-svc:8888/codebase-indexer/api/v1/index/summary"
+      DefinitionSearch:
+        SearchEndpoint: "http://codebase-querier-svc:8888/codebase-indexer/api/v1/search/definition"
+        ApiReadyEndpoint: "http://codebase-querier-svc:8888/codebase-indexer/api/v1/index/summary"
+      KnowledgeSearch:
+        SearchEndpoint: "http://codebase-querier-svc:8888/codebase-embedder/api/v1/search/document"
+        ApiReadyEndpoint: "http://codebase-querier-svc:8888/codebase-embedder/api/v1/documents/summary"
+        TopK: 20
+        ScoreThreshold: 0.7
+
+
+# 持久化存储配置
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  size: 200Gi
+  mountPath: "/data"

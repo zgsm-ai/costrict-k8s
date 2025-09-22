@@ -1,0 +1,23 @@
+Portal Web 应用已成功部署！
+
+1. 获取 Service 访问信息：
+   kubectl get svc -n {{ .Values.namespace }} {{ include "portal.fullname" . }}
+
+2. 如果使用 NodePort 类型，可以通过以下方式访问：
+   kubectl get nodes -o wide
+   然后使用 <NodeIP>:<NodePort> 访问应用
+
+3. 查看 Pod 状态：
+   kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ include "portal.name" . }}
+
+4. 查看 Deployment 状态：
+   kubectl get deployment -n {{ .Values.namespace }} {{ include "portal.fullname" . }}
+
+5. 查看 PVC 状态：
+   kubectl get pvc -n {{ .Values.namespace }} {{ include "portal.fullname" . }}-pvc
+
+6. 查看 ConfigMap 内容：
+   kubectl get configmap -n {{ .Values.namespace }} {{ include "portal.fullname" . }}-config -o yaml
+
+7. 查看应用日志：
+   kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ include "portal.name" . }}

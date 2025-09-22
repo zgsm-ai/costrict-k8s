@@ -1,0 +1,66 @@
+# values.yaml
+global:
+  storageClass: "costrict-local-path"
+prometheus:
+  prometheusSpec:
+    retention: 90d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          # storageClassName: costrict-nfs
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+grafana:
+  adminPassword: "admin"
+  ingress:
+    enabled: false
+  persistence:
+    enabled: true
+    # storageClassName: costrict-nfs
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          # storageClassName: costrict-nfs
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+prometheus-node-exporter:
+  hostNetwork: false
+  dnsPolicy: ClusterFirst
+  # 禁用默认的 hostPath 挂载
+  extraVolumes:
+    - name: proc
+      emptyDir: {}
+    - name: sys
+      emptyDir: {}
+    - name: rootfs
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: proc
+      mountPath: /host/proc
+      mountPropagation: HostToContainer
+    - name: sys
+      mountPath: /host/sys
+      mountPropagation: HostToContainer
+    - name: rootfs
+      mountPath: /rootfs
+      mountPropagation: HostToContainer
+
+  # 或者直接禁用某些需要 hostPath 的 collectors（更安全）
+  enabled: false
+  collectors:
+    enabled:
+      cpu: true
+      meminfo: true
+      filesystem: false  # 避免需要挂载 rootfs
+      diskstats: false   # 同上

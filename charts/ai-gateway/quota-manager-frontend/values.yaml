@@ -1,0 +1,116 @@
+# values.yaml
+
+# 应用配置
+appName: quota-manager-frontend
+containerName: quota-manager-frontend
+containerPort: 80
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: "zgsm/quota-manager-frontend"
+  pullPolicy: IfNotPresent
+  tag: "1.0.8"
+
+# 环境变量配置
+env:
+  TZ: Asia/Shanghai
+  NODE_ENV: production
+  VITE_API_BASE_URL: "http://10.200.101.5:31281"
+
+# 资源限制
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# 前端应用配置
+appConfig:
+  # API configuration
+  api:
+    baseURL: '/api'
+    timeout: 30000
+    enableMock: false
+
+  # Application configuration
+  app:
+    name: 'Quota Manager'
+    version: '1.0.0'
+    description: 'AI Quota Management System'
+    author: 'ShenMA AI Team'
+
+  # Feature configuration
+  features:
+    userAudit: true
+    strategyManagement: true
+    settings: true
+    realTimeMonitoring: true
+
+  # Theme configuration
+  theme:
+    primaryColor: '#409EFF'
+    layout: 'classic'
+
+# 健康检查配置
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Service 配置
+service:
+  name: quota-manager-frontend-svc
+  type: NodePort
+  port: 80
+  targetPort: 80
+  # nodePort: 30080  # 可选，如果不指定会自动分配
+
+# HPA 配置
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    cpu:
+      targetAverageUtilization: 70
+    memory:
+      targetAverageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        type: Percent
+        value: 100
+        periodSeconds: 60
+
+# 日志卷配置
+nginxLogs:
+  enabled: true
+  sizeLimit: 1Gi
+
+# 优雅关闭配置
+terminationGracePeriodSeconds: 30

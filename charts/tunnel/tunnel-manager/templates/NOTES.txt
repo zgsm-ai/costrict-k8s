@@ -1,0 +1,26 @@
+Tunnel Manager 已成功部署！
+
+应用可以通过以下方式访问：
+
+1. 集群内访问：
+   Service Name: {{ .Values.service.name }}
+   Port: {{ .Values.service.port }}
+
+2. 集群外访问（NodePort）：
+   NodePort: {{ .Values.service.nodePort }}
+   访问地址: http://<node-ip>:{{ .Values.service.nodePort }}
+
+配置信息：
+- 命名空间: {{ .Values.namespace | default .Release.Namespace }}
+- 副本数: {{ .Values.replicaCount }}
+- 镜像: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+- 持久化存储: {{ .Values.persistence.size }}
+
+查看部署状态：
+  kubectl get pods -n {{ .Values.namespace | default .Release.Namespace }} -l app={{ .Values.appName }}
+
+查看服务状态：
+  kubectl get svc -n {{ .Values.namespace | default .Release.Namespace }} {{ .Values.service.name }}
+
+查看日志：
+  kubectl logs -n {{ .Values.namespace | default .Release.Namespace }} -l app={{ .Values.appName }}

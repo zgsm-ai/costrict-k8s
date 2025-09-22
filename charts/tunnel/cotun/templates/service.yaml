@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Values.service.name }}
+  labels:
+    app: {{ .Values.service.name }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.service.name }}
+  ports:
+    # 主端口
+    - name: http-{{ .Values.service.mainPort }}
+      port: {{ .Values.service.mainPort }}
+      targetPort: {{ .Values.service.mainPort }}
+      protocol: {{ .Values.service.tunnelPorts.protocol | default "TCP" }}
+
+    # 隧道端口范围
+    {{- $protocol := .Values.service.tunnelPorts.protocol | default "TCP" }}
+    {{- $start    := int .Values.service.tunnelPorts.start }}
+    {{- $end      := int .Values.service.tunnelPorts.end }}
+    {{- range $port := untilStep $start (add $end 1 | int) 1 }}
+    - name: http-{{ $port }}
+      port: {{ $port }}
+      targetPort: {{ $port }}
+      protocol: {{ $protocol }}
+    {{- end }}

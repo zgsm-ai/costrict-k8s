@@ -1,0 +1,63 @@
+# values.yaml
+
+# 应用配置
+appName: tunnel-manager
+containerName: tunnel-manager
+containerPort: 8080
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: docker.io/zgsm/tunnel-manager
+  pullPolicy: IfNotPresent
+  tag: "v0.2.4"
+
+# 资源限制
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "1"
+  limits:
+    memory: "2Gi"
+    cpu: "2"
+
+# 配置文件参数
+config:
+  config.yaml: |
+    env: prod
+    server:
+      listenAddr: ":8080"
+    cotun:
+      addr: "cotun"
+      timeout: 5
+    recycle:
+      enable: false
+      timeout: 180
+      deadline: 3
+    storage: 
+      cache: "/data"
+    port_range:
+      start: 30000
+      end: 31000
+
+# 持久化存储配置
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  size: 1Gi
+  storageClassName: "costrict-nfs"
+  mountPath: "/data"
+
+# Service 配置
+service:
+  name: tunnel-manager
+  type: NodePort
+  port: 8080
+  targetPort: 8080
+  # nodePort: 31226
+
+# 命名空间配置
+namespace: costrict

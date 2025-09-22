@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    tier: frontend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        tier: frontend
+    spec:
+      containers:
+      - name: {{ .Values.containerName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+          name: http
+          protocol: TCP
+        env:
+          - name: TZ
+            value: {{ .Values.env.TZ }}
+          - name: NODE_ENV
+            value: {{ .Values.env.NODE_ENV }}
+          # Note: VITE_ prefix is required for Vite to expose variable to client-side code
+          - name: VITE_API_BASE_URL
+            value: {{ .Values.env.VITE_API_BASE_URL | quote }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.livenessProbe.httpGet.path }}
+            port: {{ .Values.livenessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.readinessProbe.httpGet.path }}
+            port: {{ .Values.readinessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+        volumeMounts:
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+        - name: frontend-config
+          mountPath: /usr/share/nginx/html/config
+          readOnly: true
+      volumes:
+        - name: nginx-logs
+          emptyDir:
+            sizeLimit: {{ .Values.nginxLogs.sizeLimit }}
+        - name: frontend-config
+          configMap:
+            name: {{ .Release.Name }}-config
+      # Graceful shutdown
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}

@@ -1,0 +1,35 @@
+Codebase Embedder Service deployed successfully!
+
+Namespace: {{ .Release.Namespace }}
+Release: {{ .Release.Name }}
+Application: {{ .Values.appName }}
+
+Service:
+  Type: {{ .Values.service.type }}
+  Ports:
+  {{- range .Values.service.ports }}
+    - {{ .name }}: {{ .port }}
+  {{- end }}
+
+Image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+
+Configuration:
+  Database: postgres://keycloak:password@postgres.shenma:5432/codebase_embedder?sslmode=disable
+  Redis: costrict-redis-master.costrict.svc.cluster.local:6379
+  VectorStore: weaviate
+  Embedder Model: gte-modernbert-base
+
+Resources:
+  CPU Requests: {{ .Values.resources.requests.cpu }}
+  Memory Requests: {{ .Values.resources.requests.memory }}
+  CPU Limits: {{ .Values.resources.limits.cpu }}
+  Memory Limits: {{ .Values.resources.limits.memory }}
+
+Check the pod status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app={{ .Values.appName }}
+
+View logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app={{ .Values.appName }}
+
+Access the service:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.service.name }} 8888:8888

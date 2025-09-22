@@ -1,0 +1,132 @@
+# templates/deployment.yaml
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.reviewManager.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.reviewManager.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.reviewManager.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.reviewManager.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.reviewManager.containerName }}
+          image: "{{ .Values.reviewManager.image.repository }}:{{ .Values.reviewManager.image.tag }}"
+          imagePullPolicy: {{ .Values.reviewManager.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.reviewManager.containerPort }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.local.yaml
+              subPath: config.local.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.reviewManager.appName }}-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.reviewWorker.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.reviewWorker.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.reviewWorker.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.reviewWorker.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.reviewWorker.containerName }}
+          image: "{{ .Values.reviewWorker.image.repository }}:{{ .Values.reviewWorker.image.tag }}"
+          imagePullPolicy: {{ .Values.reviewWorker.image.pullPolicy }}
+          command: ["/bin/sh", "-c", "./review-manager worker"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.local.yaml
+              subPath: config.local.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.reviewManager.appName }}-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.issueManager.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.issueManager.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.issueManager.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.issueManager.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.issueManager.containerName }}
+          image: "{{ .Values.issueManager.image.repository }}:{{ .Values.issueManager.image.tag }}"
+          imagePullPolicy: {{ .Values.issueManager.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.issueManager.containerPort }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.local.yaml
+              subPath: config.local.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.issueManager.appName }}-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.reviewChecker.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.reviewChecker.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.reviewChecker.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.reviewChecker.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.reviewChecker.containerName }}
+          image: "{{ .Values.reviewChecker.image.repository }}:{{ .Values.reviewChecker.image.tag }}"
+          imagePullPolicy: {{ .Values.reviewChecker.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.reviewChecker.containerPort }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.local.yaml
+              subPath: config.local.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.reviewChecker.appName }}-config

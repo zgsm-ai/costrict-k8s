@@ -1,0 +1,48 @@
+Code Review Service deployed successfully!
+
+Namespace: {{ .Release.Namespace }}
+Release: {{ .Release.Name }}
+
+Services:
+  - {{ .Values.reviewManager.appName }}:
+      Type: {{ .Values.reviewManager.service.type }}
+      Port: {{ .Values.reviewManager.service.port }}
+      TargetPort: {{ .Values.reviewManager.service.targetPort }}
+  - {{ .Values.issueManager.appName }}:
+      Type: {{ .Values.issueManager.service.type }}
+      Port: {{ .Values.issueManager.service.port }}
+      TargetPort: {{ .Values.issueManager.service.targetPort }}
+  - {{ .Values.reviewChecker.appName }}:
+      Type: {{ .Values.reviewChecker.service.type }}
+      Port: {{ .Values.reviewChecker.service.port }}
+      TargetPort: {{ .Values.reviewChecker.service.targetPort }}
+
+Deployments:
+  - {{ .Values.reviewManager.appName }}:
+      Replicas: {{ .Values.reviewManager.replicaCount }}
+      Image: {{ .Values.reviewManager.image.repository }}:{{ .Values.reviewManager.image.tag }}
+  - {{ .Values.reviewWorker.appName }}:
+      Replicas: {{ .Values.reviewWorker.replicaCount }}
+      Image: {{ .Values.reviewWorker.image.repository }}:{{ .Values.reviewWorker.image.tag }}
+  - {{ .Values.issueManager.appName }}:
+      Replicas: {{ .Values.issueManager.replicaCount }}
+      Image: {{ .Values.issueManager.image.repository }}:{{ .Values.issueManager.image.tag }}
+  - {{ .Values.reviewChecker.appName }}:
+      Replicas: {{ .Values.reviewChecker.replicaCount }}
+      Image: {{ .Values.reviewChecker.image.repository }}:{{ .Values.reviewChecker.image.tag }}
+
+Configuration:
+  Database: postgres-postgresql-primary:5432
+  Redis: redis:6379
+  Namespace: {{ .Values.namespace }}
+
+Check the pod status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app in (review-manager,review-worker,issue-manager,review-checker)
+
+View logs for a specific service:
+  kubectl logs -n {{ .Release.Namespace }} -l app=<service-name>
+
+Access services:
+  {{ .Values.reviewManager.appName }}: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.reviewManager.service.name }} {{ .Values.reviewManager.service.port }}:{{ .Values.reviewManager.service.port }}
+  {{ .Values.issueManager.appName }}: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.issueManager.service.name }} {{ .Values.issueManager.service.port }}:{{ .Values.issueManager.service.port }}
+  {{ .Values.reviewChecker.appName }}: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.reviewChecker.service.name }} {{ .Values.reviewChecker.service.port }}:{{ .Values.reviewChecker.service.port }}

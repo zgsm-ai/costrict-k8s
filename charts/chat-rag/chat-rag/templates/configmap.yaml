@@ -1,0 +1,8 @@
+# templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Values.appName }}-config
+data:
+  {{- toYaml .Values.config | nindent 2 }}

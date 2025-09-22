@@ -1,0 +1,128 @@
+# values.yaml
+
+# 全局配置
+namespace: costrict
+
+# review-manager 配置
+reviewManager:
+  appName: review-manager
+  containerName: review-manager
+  containerPort: 8080
+  replicaCount: 1
+  image:
+    repository: zgsm/review-manager
+    pullPolicy: IfNotPresent
+    tag: "hotfix-v2"
+  service:
+    name: review-manager
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  config:
+    config.local.yaml: |
+      database:
+        host: postgresql
+        port: 5432
+        user: costrict
+        password: costrict
+        dbname: codereview
+      redis:
+        host: redis-master
+        port: 6379
+        db: 10
+      asynq:
+        concurrency: 20
+        queues:
+          default: 5
+          critical: 20
+      http_client:
+        services:
+          issueManager:
+            base_url: "http://issue-manager:8080/issue-manager/api/v1"
+          kbCenter:
+            base_url: "http://codebase-querier-svc:8888/codebase-indexer/api/v1"
+
+# review-worker 配置
+reviewWorker:
+  appName: review-worker
+  containerName: review-worker
+  replicaCount: 1
+  image:
+    repository: zgsm/review-manager
+    pullPolicy: IfNotPresent
+    tag: "hotfix-v2"
+  # review-worker 使用与 review-manager 相同的配置
+
+# issue-manager 配置
+issueManager:
+  appName: issue-manager
+  containerName: issue-manager
+  containerPort: 8080
+  replicaCount: 1
+  image:
+    repository: zgsm/issue-manager
+    pullPolicy: IfNotPresent
+    tag: "hotfix-v1"
+  service:
+    name: issue-manager
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  config:
+    config.local.yaml: |
+      database:
+        host: postgresql
+        port: 5432
+        user: costrict
+        password: costrict
+        dbname: codereview
+
+# review-checker 配置
+reviewChecker:
+  appName: review-checker
+  containerName: review-checker
+  containerPort: 8080
+  replicaCount: 1
+  image:
+    repository: zgsm/review-checker
+    pullPolicy: IfNotPresent
+    tag: "1.1.2"
+  service:
+    name: review-checker
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  config:
+    config.local.yaml: |
+      database:
+        host: postgresql
+        port: 5432
+        user: costrict
+        password: costrict
+        dbname: codereview
+      redis:
+        host: redis-master
+        port: 6379
+        db: 11
+      chat_rag:
+        model: "qwen25-lora-base"
+        stage_models:
+          check: "qwen25-lora"
+          review: "qwen25-lora-base"
+          annotation: "qwen25-lora-base"
+          title: "qwen25-lora-base"
+      http_client:
+        services:
+          chatRag:
+            base_url: "http://chat-rag-svc:8888/chat-rag/api/v1"
+          kbCenter:
+            base_url: "http://codebase-querier-svc:8888/codebase-indexer/api/v1"
+
+# 资源限制配置
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "1000m"
