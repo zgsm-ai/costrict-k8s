@@ -59,3 +59,13 @@ higress-core:
     hub: zgsm
     image: "higress-pilot"
     tag: "2.1.6"
+  downstream:
+    connectionBufferLimits: 32768 # 连接缓冲区大小，单位字节
+    http2:
+      initialConnectionWindowSize: 1048576 # http2 连接窗口大小，单位字节，范围为65535～2147483647	
+      initialStreamWindowSize: 65535 # http2 流窗口大小，单位字节，范围为65535～2147483647	
+      maxConcurrentStreams: 100 # http2 最大并发流数量，范围为1～2147483647
+    idleTimeout: 180 # 空闲超时时间，单位秒,默认180 
+    maxRequestHeadersKb: 60 # 最大请求头大小，单位KB,最大为8192
+
+  

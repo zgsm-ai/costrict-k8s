@@ -59,6 +59,24 @@ master:
     maxmemory 6gb
     maxmemory-policy allkeys-lru
 
+    # 慢盘
+    # ---------- RDB ----------
+    # save 900 1200
+    # save 300 900
+    # save 60 10000
+    # dbfilename dump.rdb
+    # ---------- AOF ----------
+    # appendonly yes
+    # appendfsync no
+    # no-appendfsync-on-rewrite yes
+    # aof-use-rdb-preamble yes
+    # ---------- AOF 重写 ----------
+    # auto-aof-rewrite-percentage 100
+    # auto-aof-rewrite-min-size 64mb
+    # ---------- 内存 ---------- 建议和resource对比清楚
+    # maxmemory 6gb
+    # maxmemory-policy allkeys-lru
+
 
   resources:
     requests:
