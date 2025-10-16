@@ -191,7 +191,7 @@ class HelmDeployer:
             print("错误: helm命令未找到，请确保helm已安装并在PATH中")
             return False
     
-    def process_section(self, command: str, section_name: str, section_config: Dict[str, Any]) -> bool:
+    def process_section(self, command: str, section_name: str, section_config: Dict[str, Any],limit_subsection_name = "") -> bool:
         """
         处理配置段
         
@@ -207,6 +207,9 @@ class HelmDeployer:
         
         for subsection_name, subsection_config in section_config.items():
             if subsection_name == 'namespace':  # 跳过namespace字段
+                continue
+            
+            if limit_subsection_name and subsection_name != limit_subsection_name:
                 continue
                 
             if isinstance(subsection_config, dict):
@@ -227,7 +230,7 @@ class HelmDeployer:
         
         return success
     
-    def run_template(self) -> bool:
+    def run_template(self,release="") -> bool:
         """
         运行template命令
         
@@ -247,7 +250,7 @@ class HelmDeployer:
                 
             if isinstance(section_config, dict):
                 print(f"\n处理配置段: {section_name}")
-                if not self.process_section('template', section_name, section_config):
+                if not self.process_section('template', section_name, section_config,limit_subsection_name=release):
                     success = False
             else:
                 print(f"警告: 配置段 {section_name} 格式不正确，跳过")
@@ -272,7 +275,7 @@ class HelmDeployer:
         
         return success
     
-    def run_install(self) -> bool:
+    def run_install(self,release="") -> bool:
         """
         运行install命令
         
@@ -292,7 +295,7 @@ class HelmDeployer:
                 
             if isinstance(section_config, dict):
                 print(f"\n处理配置段: {section_name}")
-                if not self.process_section('install', section_name, section_config):
+                if not self.process_section('install', section_name, section_config,limit_subsection_name=release):
                     success = False
             else:
                 print(f"警告: 配置段 {section_name} 格式不正确，跳过")
@@ -317,7 +320,7 @@ class HelmDeployer:
         
         return success
     
-    def run_upgrade(self) -> bool:
+    def run_upgrade(self,release="") -> bool:
         """
         运行upgrade命令
         
@@ -434,6 +437,9 @@ def main():
     parser = argparse.ArgumentParser(description="Helm部署脚本")
     parser.add_argument("command", choices=["template", "install", "upgrade", "check"],
                        help="要执行的helm命令")
+    parser.add_argument("release", nargs="?", default=None,
+                       help="指定安装某个release (例如: template redis),如果有同名的会异常")
+    
     parser.add_argument("--config", default="deployment-config.yaml",
                        help="配置文件路径 (默认: deployment-config.yaml)")
     parser.add_argument("--chart-base-dir", default="./out",
@@ -453,13 +459,13 @@ def main():
     
     # 执行相应命令
     if args.command == "template":
-        success = deployer.run_template()
+        success = deployer.run_template(args.release)
     elif args.command == "install":
-        success = deployer.run_install()
+        success = deployer.run_install(args.release)
     elif args.command == "upgrade":
-        success = deployer.run_upgrade()
+        success = deployer.run_upgrade(args.release)
     elif args.command == "check":
-        success = deployer.run_check()
+        success = deployer.run_check(args.release)
     
     # 根据执行结果退出
     sys.exit(0 if success else 1)
