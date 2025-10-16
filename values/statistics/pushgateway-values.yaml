@@ -40,9 +40,6 @@ service:
   port: 9091
   targetPort: 9091
 
-# 节点选择器
-# nodeSelector:
-#   kubernetes.io/hostname: worker1
 
 # Pushgateway 配置
 pushgateway:

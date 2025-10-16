@@ -437,7 +437,7 @@ def main():
     parser = argparse.ArgumentParser(description="Helm部署脚本")
     parser.add_argument("command", choices=["template", "install", "upgrade", "check"],
                        help="要执行的helm命令")
-    parser.add_argument("release", nargs="?", default=None,
+    parser.add_argument("release", nargs="?", default="",
                        help="指定安装某个release (例如: template redis),如果有同名的会异常")
     
     parser.add_argument("--config", default="deployment-config.yaml",
@@ -465,7 +465,7 @@ def main():
     elif args.command == "upgrade":
         success = deployer.run_upgrade(args.release)
     elif args.command == "check":
-        success = deployer.run_check(args.release)
+        success = deployer.run_check()
     
     # 根据执行结果退出
     sys.exit(0 if success else 1)
