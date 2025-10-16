@@ -1,0 +1,28 @@
+Pushgateway deployed successfully!
+
+Namespace: {{ .Values.namespace }}
+Release: {{ .Release.Name }}
+Application: {{ .Values.appName }}
+
+Service:
+  Type: {{ .Values.service.type }}
+  Port: {{ .Values.service.port }}
+  {{- if eq .Values.service.type "NodePort" }}
+  NodePort: {{ .Values.service.nodePort }}
+  Access URL: http://<NODE-IP>:{{ .Values.service.nodePort }}
+  {{- else }}
+  Cluster IP: {{ .Values.service.port }}
+  {{- end }}
+
+Image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+
+Configuration:
+  Persistence: {{ .Values.persistence.enabled }}
+  Storage Size: {{ .Values.persistence.size }}
+  Storage Class: {{ .Values.persistence.storageClassName }}
+
+Check the pod status:
+  kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ .Values.appName }}
+
+View logs:
+  kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ .Values.appName }}

@@ -1,0 +1,65 @@
+# values.yaml
+
+# 应用配置
+appName: pushgateway
+containerName: pushgateway
+containerPort: 9091
+namespace: shenma
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: prom/pushgateway
+  pullPolicy: IfNotPresent
+  tag: "v1.8.0"
+
+# 资源限制
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 250m
+    memory: 640Mi
+
+# 持久化存储配置
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 20Gi
+  storageClassName: "nfs-storage"
+  mountPath: "/data"
+
+# Service 配置
+service:
+  name: pushgateway
+  type: ClusterIP
+  port: 9091
+  targetPort: 9091
+
+# 节点选择器
+nodeSelector:
+  kubernetes.io/hostname: worker1
+
+# Pushgateway 配置
+pushgateway:
+  args:
+    - "--persistence.file=/data/metrics"
+    - "--persistence.interval=5m"
+    - "--web.enable-admin-api"
+    - "--web.enable-lifecycle"
+  
+  # 健康检查配置
+  livenessProbe:
+    path: /-/healthy
+    port: http
+  
+  readinessProbe:
+    path: /-/ready
+    port: http
+
+# 时区配置
+timezone: "Asia/Shanghai"

@@ -149,3 +149,9 @@ portal:
     set:
       "image.repository": "docker.io/library/nginx"
       "image.tag": "1.27.1"
+statistics:
+  pushgateway:
+    chart: pushgateway-0.1.0.tgz
+    values: pushgateway-values.yaml
+    storageClass:
+      "persistence.storageClassName": "nfs-storage"
