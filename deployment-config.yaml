@@ -37,8 +37,8 @@ tunnel:
       "image.repository": "docker.io/zgsm/tunnel-manager"
       "image.tag": "v0.2.4"
   cotun:
-    # 可以移动到其他命名空间,但是需要修改配置文件.
-    # namespace: costrict-cotun-test
+    # 可以移动到其他命名空间,需要修改调用方配置文件. values/codebase-server/querier-values.yaml
+    namespace: costrict-cotun
     chart: cotun-0.1.0.tgz
     values: cotun-values.yaml
     set:

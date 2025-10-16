@@ -131,7 +131,7 @@ config:
           Host: "localhost:8080"
       port_manager:                    # 端口管理器配置（新配置）
         url: "http://tunnel-manager:8080"  # 端口管理器URL
-        forward_url: "http://cotun"
+        forward_url: "http://cotun.costrict-cotun" # cotun地址, 将和deployemnt-config.yaml的命名空间一致
         timeout: 30s                  # 请求超时时间
         cache_exp: 5m                  # 缓存过期时间
         max_idle_conns: 10              # 最大空闲连接数
