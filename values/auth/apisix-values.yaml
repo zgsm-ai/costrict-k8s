@@ -14,6 +14,10 @@ apisix:
     type: ClusterIP
   enabled: true
   nginx:
+    logs:
+      errorLogLevel: "warn"
+      # 给日志加上requestId打印
+      accessLogFormat: '$remote_addr - $remote_user [$time_local] $http_host \"$request\" $status $body_bytes_sent [rid:$http_x_request_id] $request_time \"$http_referer\" \"$http_user_agent\" $upstream_addr $upstream_status $upstream_response_time \"$upstream_scheme://$upstream_host$upstream_uri\"'
     configurationSnippet:
       httpSrv: |
         proxy_ignore_client_abort       off;
