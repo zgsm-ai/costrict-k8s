@@ -33,15 +33,19 @@ jobs:
     - name: Run Helm packaging script
       run: python package_helm_charts.py
       
-    - name: Create all.tar from tgz files
+    - name: Create all-charts.tar from tgz files
       run: |
         cd out
-        tar -cvf all.tar */
+        tar -cvf all-charts.tar */
         
-    - name: Create all.zip from tgz files
+    - name: Create all-charts.zip from tgz files
       run: |
         cd out
-        zip -r all.zip */
+        zip -r all-charts.zip */
+        
+    - name: Create k8s-deploy.zip with deployment files
+      run: |
+        zip -r k8s-deploy.zip doc out values deployment-config.yaml helm_deploy.py README_CN.md README.md
         
     - name: Read release template
       id: read-template
@@ -55,9 +59,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          out/all.tar
-          out/all.zip
-          out/*/*.tgz
+          out/all-charts.tar
+          out/all-charts.zip
+          k8s-deploy.zip
         draft: false
         prerelease: false
         generate_release_notes: true
