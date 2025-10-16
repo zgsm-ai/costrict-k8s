@@ -10,6 +10,8 @@
 2. k8s
 3. helm
 
+注意：此部署只部署服务，相关配置还需要用户自行配置，**并且不部署Prometheus以及不同服务的 ServiceMonitor**
+
 ## 前期准备
 
 ### 环境
@@ -18,19 +20,19 @@
 
 对于多节点，准备可用的StorageClass，比如通过nfs创建的sc。
 
-对于单节点服务器，不建议使用helm部署，可能存在部分服务不支持的情况，如果仍需要helm部署，请主备一个目录用于存储持久化数据，并创建hostPath类型的SC,请参考[https://github.com/rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner) ,其中[yaml文件](https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.32/deploy/local-path-storage.yaml)和[镜像](https://hub.docker.com/layers/rancher/local-path-provisioner/v0.0.32/images/sha256-64975a72cb31bda96fea61f4b59e6cca4545e531487a13fab7ba1b7aba95bd6c)下载导入和使用不在此教程中
+对于单节点服务器，不建议使用helm部署，可能存在部分服务不支持的情况，如果仍需要helm部署，请创建网络存储卷，也可以准备一个目录用于存储持久化数据，并创建hostPath类型的SC,请参考[https://github.com/rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner) ,其中[yaml文件](https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.32/deploy/local-path-storage.yaml)和[镜像](https://hub.docker.com/layers/rancher/local-path-provisioner/v0.0.32/images/sha256-64975a72cb31bda96fea61f4b59e6cca4545e531487a13fab7ba1b7aba95bd6c)下载导入和使用不在此教程中
 
 ### 导入镜像
 
-导入所有docker镜像
+如果是离线环境，请导入所有docker镜像
 
 ### 创建k8s存储类(StorageClass)
 
-根据实际的存储情况，创建sc
+根据实际的业务需求情况，创建sc
 
 ### 创建namespace
 
-创建namespace costrict 本例子都将按照costrict namespace 进行配置
+创建namespace costrict 本例子都将按照costrict (cotun在costrict-cotun 命名空间下)namespace 进行配置
 
 ```
 kubectl create ns costrict
@@ -38,7 +40,7 @@ kubectl create ns costrict
 
 ### 了解配置文件
 
-在 deployment-config.yaml中，最外层的键除了global意外都表示一个模块(键就是其模块名)，每个模块中有一个或者多个服务,每个服务都有多个配置，包含：
+在 deployment-config.yaml中，最外层的键除了global外都表示一个模块(键就是其模块名)，每个模块中有一个或者多个服务,每个服务都有多个配置，包含：
 
 values配置，chart配置，storageClass配置，set配置：
 
@@ -66,13 +68,14 @@ data-services:
   redis:
     values: redis-values.yaml
     chart: redis-20.3.0.tgz
-  weaviate:
-    chart: weaviate-17.4.5.tgz
-    values: weaviate-values.yaml
+  # 注释的内容将不会被安装
+  # weaviate:
+  #   chart: weaviate-17.4.5.tgz
+  #   values: weaviate-values.yaml
 
 ```
 
-表示data-service这个模块，有3个服务，分别是  postgresql redis weaviate
+表示data-service这个模块，有3个服务，分别是  postgresql redis weaviate(weaviate被注释了)
 
 weaviate 的chart就在 `out/data-services/weaviate-17.4.5.tgz` weaviate的values.yaml就在 `values/data-service/weaviate-values.yaml` 
 
@@ -80,7 +83,11 @@ weaviate 的chart就在 `out/data-services/weaviate-17.4.5.tgz` weaviate的value
 
 ### 修改部署配置
 
-修改配置文件**deployment-config.yaml** 修改自定义的存储类。
+1. 修改配置文件选择注释掉不需要安装的内容
+
+2. 如果用户量增加,建议将weaviate redis 单独使用docker 部署到特定服务器，提升稳定性, 建议拆分不同业务的存储，避免相互影响
+
+3. 修改配置文件**deployment-config.yaml** 修改自定义的存储类
 
 有这些模块的多个服务的存储类需要修改： `chat-rag` `portal` `tunnel-nanager` `postgresql` `redis`  `weaviate` `apisix` `higress`
 
@@ -98,8 +105,13 @@ chat-rag:
 
 ### 修改helm-values
 
-1. 
-2. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml
+ 
+1. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml
+
+### 修改自定义设置
+
+1. `values/auth/oidc-values.yaml` 修改 clientID clientSecret,登录认证时需要
+2. `values/ai-gateway/quota-manager-values.yaml` 修改signing_key, 用于签名配额
 
 ## 检查配置完整度
 
@@ -109,9 +121,12 @@ python3 helm_deploy.py check
 
 ## 安装
 
+使用以下命令安装全部服务
 ```
 python3 helm_deploy.py install
 ```
+
+建议使用 `python3 helm_deploy.py install postgresql` 先安装pgsql, 配置数据库后在配置文件中注释postgresql 再使用`python3 helm_deploy.py install`安装其他服务
 
 ### 配置数据库
 到数据库中运行[SQL](./sql/init_db.sql)
@@ -138,8 +153,7 @@ admin
 
 ### 配置higress
 
-访问higress 并设置初始密码如：admin test123
-
+访问higress 并设置初始密码如：admin test123,并按照官方文档配置安装。
 
 
 # 卸载
@@ -147,6 +161,8 @@ admin
 不提供卸载脚本，请手动卸载，<font color='red'>卸载十分危险，请谨慎执行</font>
 
 **卸载heml chart**
+
+全部卸载
 
 ```shell
 helm uninstall  -n <namespace>  $(helm list -n test-costrict  | awk '{print $1}' | grep -v NAME)
