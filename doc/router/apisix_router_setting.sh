@@ -6,8 +6,13 @@ OIDC_CLIENT_SECRET=7c51a6b92dfebfa55d96
 OIDC_DISCOVERY_ADDR=http://casdoor:8000/.well-known/openid-configuration
 OIDC_INTROSPECTION_ENDPOINT=http://casdoor:8000/api/login/oauth/introspect
 
-APISIX_ADDR=10.233.8.7:9180
+# apisix 管理地址
+APISIX_ADDR=10.233.31.155:9180
+# 认证头,和 helm yaml中一致
 AUTH="X-API-KEY: costrict-2025-admin"
+# apisix trusted_addresses	k8s 代理层的 IP
+TRUSTED_ADDRESSES="10.233.0.0/18"
+
 TYPE="Content-Type: application/json"
 
 # 初始化成功和失败的模块计数器
@@ -43,7 +48,26 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
     "id": "ai-gateway",
     "name": "ai-gateway",
     "upstream_id": "ai-gateway",
-    "status": 1
+    "status": 1,
+    "plugins": {
+      "limit-count": {
+        "count": 60,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
+        "rejected_code": 429,
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
+      }
+    }
   }'
 check_module_status "AI Gateway"
 
@@ -73,6 +97,25 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
     "/login/success",
     "/callback*"
   ],
+  "plugins": {
+    "limit-count": {
+      "count": 120,
+      "key": "$remote_addr",
+      "key_type": "var",
+      "policy": "local",
+      "rejected_code": 429,
+      "show_limit_quota_header": true,
+      "time_window": 60
+    },
+    "real-ip": {
+      "header": "X-Forwarded-For",
+      "recursive": true,
+      "source": "header",
+      "trusted_addresses": [
+        "'$TRUSTED_ADDRESSES'"
+      ]
+    }
+  },
   "id": "casdoor",
   "name": "casdoor-routes",
   "upstream_id": "casdoor"
@@ -98,19 +141,29 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
     "upstream_id": "chat-rag",
     "plugins": {
       "request-id": {
-        "include_in_response": true
+        "include_in_response": false
       },
       "file-logger": {
-        "include_req_body": true,
-        "include_resp_body": true,
+        "include_req_body": false,
+        "include_resp_body": false,
         "path": "logs/access.log"
       },
       "limit-count": {
-        "count": 10000,
-        "time_window": 86400,
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key": "$remote_addr $http_x_forwarded_for",
-        "key_type": "var_combination"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       },
       "limit-req": {
         "rate": 300,
@@ -118,13 +171,6 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "rejected_code": 429,
         "key_type": "var_combination",
         "key": "$remote_addr $http_x_forwarded_for"
-      },
-      "loki-logger": {
-        "endpoint_addrs": ["http://loki.loki:3100"],
-        "endpoint_uri": "/loki/api/v1/push",
-        "include_req_body": true,
-        "include_resp_body": true,
-        "log_labels": {"job": "apisix"}
       },
       "openid-connect": {
         "client_id": "'"$OIDC_CLIENT_ID"'",
@@ -146,7 +192,7 @@ check_module_status "ChatRAG"
 # CLI Tools Configuration
 echo "正在配置 CLI Tools 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "id": "shenma-client",
+    "id": "costrict-apps",
     "nodes": {
       "portal:8080": 1
     },
@@ -154,26 +200,32 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
   }'
   
 curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "uri": "/shenma/*",
-    "id": "shenma-client",
-    "name": "shenma-client",
-    "upstream_id": "shenma-client",
+    "uri": "/costrict/*",
+    "name": "costrict-apps",
+    "upstream_id": "costrict-apps",
     "plugins": {
-      "proxy-rewrite": {
-        "regex_uri": ["^/shenma/api/v1(.*)", "/shenma-cli-tools$1"]
-      },
       "file-logger": {
-        "path": "logs/access.log",
         "include_req_body": false,
         "include_resp_body": false,
-        "only_req_line": true
+        "only_req_line": true,
+        "path": "logs/access.log"
       },
       "limit-count": {
-        "count": 100,
-        "time_window": 60,
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       }
     }
   }'
@@ -223,11 +275,21 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "key": "$remote_addr $http_x_forwarded_for"
       },
       "limit-count": {
-        "count": 10000,
-        "time_window": 86400,
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       }
     }
   }'
@@ -257,11 +319,21 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "key": "$remote_addr $http_x_forwarded_for"
       },
       "limit-count": {
-        "count": 10000,
-        "time_window": 86400,
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       }
     }
   }'
@@ -301,17 +373,27 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "key": "$remote_addr $http_x_forwarded_for"
       },
       "limit-count": {
-        "count": 10000,
-        "time_window": 86400,
+        "count": 240,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       },
       "file-logger": {
-        "path": "logs/access.log",
-        "include_req_body": true,
-        "include_resp_body": true
-      }
+        "include_req_body": false,
+        "include_resp_body": false,
+        "path": "logs/access.log"
+      },
     }
   }'
 check_module_status "Code Completion V2"
@@ -341,11 +423,21 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "key": "$remote_addr $http_x_forwarded_for"
       },
       "limit-count": {
-        "count": 10000,
-        "time_window": 86400,
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
         "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       }
     }
 }'
@@ -385,6 +477,25 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
     "/oidc-auth/api/v1/plugin*",
     "/oidc-auth/api/v1/manager*"
   ],
+  "plugins": {
+    "limit-count": {
+        "count": 60,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
+        "rejected_code": 429,
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
+      }
+  }
   "upstream_id": "oidc-auth"
 }'
 check_module_status "OIDC Auth"
@@ -412,14 +523,21 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "path": "logs/access.log"
       },
       "limit-count": {
-        "allow_degradation": false,
-        "count": 10000,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for",
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 86400
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
       },
       "limit-req": {
         "allow_degradation": false,
@@ -444,6 +562,66 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
     }
   }'
 check_module_status "Quota Manager"
+
+# ****
+# PushGateway Configuration
+echo "正在配置 PushGateway 模块..."
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "id": "pushgateway",
+    "nodes": {
+      "pushgateway.shenma.svc.cluster.local:9091": 1
+    },
+    "type": "roundrobin"
+  }'
+
+curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "uri": "/pushgateway/api/v1/*",
+    "name": "pushgateway",
+    "upstream_id": "pushgateway",
+    "plugins": {
+        "proxy-rewrite": {
+            "regex_uri": ["^/pushgateway/api/v1/(.*)", "/$1"]
+        },
+        "limit-count": {
+        "count": 120,
+        "key": "$remote_addr",
+        "key_type": "var",
+        "policy": "local",
+        "rejected_code": 429,
+        "show_limit_quota_header": true,
+        "time_window": 60
+      },
+      "real-ip": {
+        "header": "X-Forwarded-For",
+        "recursive": true,
+        "source": "header",
+        "trusted_addresses": [
+          "'$TRUSTED_ADDRESSES'"
+        ]
+      },
+      "limit-req": {
+        "allow_degradation": false,
+        "burst": 300,
+        "key": "$remote_addr $http_x_forwarded_for",
+        "key_type": "var_combination",
+        "nodelay": false,
+        "policy": "local",
+        "rate": 300,
+        "rejected_code": 429
+      },
+      "openid-connect": {
+        "client_id": "'"$OIDC_CLIENT_ID"'",
+        "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+        "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+        "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+        "introspection_endpoint_auth_method": "client_secret_basic",
+        "introspection_interval": 60,
+        "bearer_only": true,
+        "scope": "openid profile email"
+      }
+    }
+  }'
+check_module_status "PushGateway"
 
 # ****
 # 执行结果统计
