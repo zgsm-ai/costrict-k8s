@@ -5,7 +5,7 @@ replicaCount: 1
 
 # 镜像配置
 image:
-  repository: "zgsm/code-completions"  # 必须由用户填写
+  repository: "docker.io/zgsm/code-completions"  #
   tag: "1.6.4"
   pullPolicy: IfNotPresent
 
@@ -20,14 +20,13 @@ resources:
 
 # 环境变量（可全部自定义）
 env:
-  # 补全模型地址
-  OPENAI_MODEL_HOST: "http://localhost/v1/completions"
-  # 补全模型
-  OPENAI_MODEL: ""
+  OPENAI_MODEL_HOST: "http://172.16.254.5:32081/v1/completions"
+  OPENAI_MODEL: "DeepSeek-Coder-V2-Lite-Base"
+  OPENAI_MODEL_AUTHORIZATION: ""
   # 上下文定义检索服务的完整请求 URL（用于精确匹配类/方法定义）
   CODEBASE_DEFINITION_URL: "http://codebase-querier-svc.costrict.svc.cluster.local:8888/codebase-indexer/api/v1/search/definition"
   # 上下文语义检索服务的完整请求 URL（用于相似代码片段搜索）
-  CODEBASE_SEMANTIC_URL: "http://codebase-embedder-svc.costrict.svc.cluster.local:8888/codebase-embedder/api/v1/search/semantic"
+  CODEBASE_SEMANTIC_URL: "http://codebase-querier-svc.costrict.svc.cluster.local:8888/codebase-embedder/api/v1/search/semantic"
   # 整个上下文检索阶段允许的总耗时（单位：毫秒）
   CONTEXT_COST_TIME: "700"
   # 单次上下文请求的最大超时时间（单位：毫秒）
@@ -35,9 +34,9 @@ env:
   # 模型单次生成响应的最大 token 数
   MAX_TOKENS: "500"
   # 模型生成阶段允许的最大耗时（单位：毫秒）
-  MAX_MODEL_COST_TIME: "1000"
+  MAX_MODEL_COST_TIME: "1500"
   # 用户可容忍的总请求耗时上限（从发起请求到收到响应，单位：毫秒）
-  MAX_COST_TIME: "1500"
+  MAX_COST_TIME: "2000"
   # 是否禁用语言特征拒绝功能（如过滤非代码内容）
   DISABLED_REJECT_LANGUAGE_FEATURE: "True"
 
@@ -48,3 +47,41 @@ service:
   port: 5000
   targetPort: 5000
   # nodePort: 32500  # 可选，如果 type=NodePort 才生效
+
+# HPA 配置
+hpa:
+ enabled: true # 是否启用 HPA
+ minReplicas: 1 # 最小副本数
+ maxReplicas: 9 # 最大副本数
+ targetCPUUtilizationPercentage: 95 # CPU 使用率目标百分比
+ targetMemoryUtilizationPercentage: 85 # 内存使用率目标百分比
+ behavior:
+   scaleUp:
+     stabilizationWindowSeconds: 30 # 扩容稳定窗口时间
+     policies:
+     - type: Percent
+       value: 50 # 每次最多增加 50% 的副本数
+       periodSeconds: 60
+     - type: Pods
+       value: 2 # 每次最多增加 2 个副本
+       periodSeconds: 60
+     selectPolicy: Max # 选择较大的策略
+   scaleDown:
+     stabilizationWindowSeconds: 300 # 缩容稳定窗口时间（5分钟）
+     policies:
+     - type: Percent
+       value: 10 # 每次最多减少 10% 的副本数
+       periodSeconds: 60
+     - type: Pods
+       value: 1 # 每次最多减少 1 个副本
+       periodSeconds: 60
+     selectPolicy: Min # 选择较小的策略
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 5000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3

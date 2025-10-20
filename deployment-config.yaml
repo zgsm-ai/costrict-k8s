@@ -2,7 +2,7 @@
 # 将 out/ 目录下的 chart 文件与 values/ 目录下的配置文件对应
 global:
   # 全局namespace,每个服务可以自定义.
-  namespace: test-costrict
+  namespace: costrict
   # set 可以用于全局helm Set
   set: ""
 

@@ -9,8 +9,8 @@ replicaCount: 2
 
 # 镜像配置
 image:
-  repository: "registry.ai.sangfor.com/costrict/code-completions"  # 必须由用户填写
-  tag: "v1.6.2"
+  repository: "docker.io/zgsm/code-completions"  #
+  tag: "1.6.4"
   pullPolicy: IfNotPresent
 
 # 资源限制
@@ -50,7 +50,7 @@ env:
   CODEBASE_DEFINITION_URL: "http://codebase-querier-svc.costrict.svc.cluster.local:8888/codebase-indexer/api/v1/search/definition"
 
   # 上下文语义检索服务的完整请求 URL（用于相似代码片段搜索）
-  CODEBASE_SEMANTIC_URL: "http://codebase-embedder-svc.costrict.svc.cluster.local:8888/codebase-embedder/api/v1/search/semantic"
+  CODEBASE_SEMANTIC_URL: "http://codebase-querier-svc.costrict.svc.cluster.local:8888/codebase-embedder/api/v1/search/semantic"
 
   # 语义检索返回的最相似结果数量（Top-K）
   CODEBASE_SEMANTIC_TOP_K: "5"
@@ -112,6 +112,9 @@ env:
   # 是否关闭上下文语义检索功能（True 表示关闭）
   DISABLE_CONTEXT_SEMANTIC: "False"
 
+  # 
+  UVICORN_WORKERS: 2
+
 # Service 配置
 service:
   type: ClusterIP
@@ -127,3 +130,51 @@ appName: code-completion-server
 
 # Service 名称
 serviceName: code-completion-svc
+
+# 探针配置
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 5000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# HPA 配置
+hpa:
+ enabled: true # 是否启用 HPA
+ minReplicas: 1 # 最小副本数
+ maxReplicas: 10 # 最大副本数
+ targetCPUUtilizationPercentage: 80 # CPU 使用率目标百分比
+ targetMemoryUtilizationPercentage: 80 # 内存使用率目标百分比
+ behavior:
+   scaleUp:
+     stabilizationWindowSeconds: 30 # 扩容稳定窗口时间
+     policies:
+     - type: Percent
+       value: 50 # 每次最多增加 50% 的副本数
+       periodSeconds: 60
+     - type: Pods
+       value: 2 # 每次最多增加 2 个副本
+       periodSeconds: 60
+     selectPolicy: Max # 选择较大的策略
+   scaleDown:
+     stabilizationWindowSeconds: 300 # 缩容稳定窗口时间（5分钟）
+     policies:
+     - type: Percent
+       value: 10 # 每次最多减少 10% 的副本数
+       periodSeconds: 60
+     - type: Pods
+       value: 1 # 每次最多减少 1 个副本
+       periodSeconds: 60
+     selectPolicy: Min # 选择较小的策略
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 5000
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3

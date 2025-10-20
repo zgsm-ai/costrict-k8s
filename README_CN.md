@@ -44,6 +44,8 @@
 
 **values**
 
+helm values 文件都在values/目录下
+
 ```
 ├─ai-gateway            # ai网关和配额插件
 ├─auth                  # 服务网关和认证相关模块
