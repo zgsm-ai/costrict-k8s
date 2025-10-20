@@ -2,18 +2,24 @@
 # 将 out/ 目录下的 chart 文件与 values/ 目录下的配置文件对应
 global:
   # 全局namespace,每个服务可以自定义.
-  namespace: costrict
+  namespace: test-costrict
   # set 可以用于全局helm Set
   set: ""
 
 data-services:
-  postgresql:
-    values: postgresql-values.yaml
-    chart: postgresql-16.6.6.tgz
-    # storageClass，由于比较重要，直接从set中提出来，单独作为配置项
-    # 由于不同helm包的key不一致或者会配置多个sc，此处通过key:value来配置。
+  # postgresql:
+  #   values: postgresql-values.yaml
+  #   chart: postgresql-16.6.6.tgz
+  #   # storageClass，由于比较重要，直接从set中提出来，单独作为配置项
+  #   # 由于不同helm包的key不一致或者会配置多个sc，此处通过key:value来配置。
+  #   storageClass:
+  #     "global.storageClass": "nfs-storage"
+  # 采用高可用版本
+  postgresql-ha:
+    values: postgresql-ha-values.yaml
+    chart: postgresql-ha-16.3.2.tgz
     storageClass:
-      "global.storageClass": "nfs-storage"
+      "global.defaultStorageClass": "nfs-storage"
   redis:
     values: redis-values.yaml
     chart: redis-20.3.0.tgz

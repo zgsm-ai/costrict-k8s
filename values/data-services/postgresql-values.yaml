@@ -2,18 +2,20 @@ global:
   storageClass: "costrict-nfs"
 
 image:
-  registry: "docker.io"                
-  repository: "bitnami/postgresql"    # 镜像名称
-  tag: "17.5.0-debian-12-r20"         # 请替换为实际的 16.6.6 版本 tag
+  registry: "docker.io"
+  repository: "bitnami/postgresql"
+  tag: "17.5.0-debian-12-r20"
 
 auth:
-  # existingSecret: costrict-postgresql   # ❌ 注释或删除这一行
-  password: "costrict"   # ✅ 直接在这里设置密码
-  username: "costrict"               # 可选：如果需要指定用户名
+  password: "costrict"
+  username: "costrict"
   database: "costrict"
+  # 显式设置复制用户和密码（非常重要！）
+  replicationUser: "repluser"
+  replicationPassword: "replpass"
 
-architecture: standalone
-#architecture: replication
+# ✅ 关键：启用复制架构
+architecture: replication
 
 audit:
   logTimezone: "Asia/Shanghai"
@@ -21,7 +23,6 @@ audit:
 primary:
   initdb:
     scripts:
-      # 主要是创建数据库
       init_user_db.sql: |
         CREATE USER costrict WITH PASSWORD 'costrict';
         CREATE DATABASE codebase_embedder ENCODING 'UTF8';
@@ -61,7 +62,7 @@ primary:
       memory: 4Gi
 
   service:
-    type: NodePort
+    type: ClusterIP  # 建议主库不暴露 NodePort
 
   persistence:
     enabled: true
@@ -69,10 +70,9 @@ primary:
     accessModes:
       - ReadWriteMany
 
-
+# ✅ 配置只读副本
 readReplicas:
-
-  replicaCount: 1
+  replicaCount: 2
 
   extraEnvVars:
     - name: TZ
@@ -103,11 +103,11 @@ readReplicas:
       memory: 4Gi
 
   service:
-    type: NodePort
+    type: ClusterIP  # 可根据需要改为 LoadBalancer 或保留 ClusterIP
 
   persistence:
     enabled: true
-    size: 100Gi
+    size: 200Gi  # ✅ 与主节点一致
     accessModes:
       - ReadWriteMany
 
@@ -128,6 +128,5 @@ volumePermissions:
 
 metrics:
   enabled: true
-
   serviceMonitor:
     enabled: false

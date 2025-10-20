@@ -95,7 +95,7 @@ dashboard:
   config:
     authentication:
       users:
-      - password: shenma
+      - password: costrict
         username: admin
     conf:
       allow_list:

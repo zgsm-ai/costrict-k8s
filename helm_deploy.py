@@ -340,7 +340,7 @@ class HelmDeployer:
                 
             if isinstance(section_config, dict):
                 print(f"\n处理配置段: {section_name}")
-                if not self.process_section('upgrade', section_name, section_config):
+                if not self.process_section('upgrade', section_name, section_config,limit_subsection_name=release):
                     success = False
             else:
                 print(f"警告: 配置段 {section_name} 格式不正确，跳过")

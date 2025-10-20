@@ -1,0 +1,103 @@
+# values.yaml
+global:
+  postgresql:
+    username: "postgres"
+    password: "costrict-postgres"
+    database: postgres
+    repmgrUsername: repmgr
+    repmgrPassword: "repmgr"
+    repmgrDatabase: "repmgr"
+    existingSecret: ""
+  defaultStorageClass: nfs-storage # 替换为你的 StorageClass
+
+postgresql:
+  replicaCount: 3  # 至少 3 个节点以保证 quorum
+  syncReplication: true
+  syncReplicationMode: "FIRST"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "6"
+      memory: 12Gi
+  persistence:
+    enabled: true
+    size: 20Gi
+  tls:
+    enabled: false  # 若启用，请配置证书
+    # kubectl create secret generic postgresql-tls-secret --from-file=./cert.crt --from-file=./cert.key --from-file=./ca.crt
+    certificatesSecret: ""
+    certFilename: ""
+    certKeyFilename: ""
+  # 连接设置
+  # maxConnections: ""
+  # postgresConnectionLimit: ""
+  # dbUserConnectionLimit: ""
+  # statementTimeout: ""
+  audit:
+    logTimezone: "Asia/Shanghai"
+    # 将客户端登录操作记录到日志文件 (默认关闭)
+    logConnections: false
+    # 	将客户端注销操作添加到日志文件 (默认关闭)
+    logDisconnections: false
+
+  # 初始化数据库
+  initdbScripts:
+    costrict-init.sql: |-
+      -- Step 1: 创建用户（角色）costrict，并设置密码
+      CREATE USER costrict WITH PASSWORD 'costrict';
+      -- Step 2: 创建多个数据库，并指定 owner 为 costrict
+      -- 这样 costrict 就拥有完全控制权（建表、删表、改结构等）
+      CREATE DATABASE codebase_embedder ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE casdoor ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE codereview ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE auth ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE quota_manager ENCODING 'UTF8' OWNER costrict;
+
+pgpool:
+  replicaCount: 2  # 可扩展多个 Pgpool 实例
+  adminUsername: "pgpool"
+  adminPassword: "pgpool"
+  srCheckUsername: "pgpool_check"
+  srCheckPassword: "pgpool_check"
+  useLoadBalancing: true
+  logConnections: true
+  logPerNodeStatement: true
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+  customUsers:
+    # 注意，与后续的初始化脚本中的用户名保持一致
+    usernames: "costrict"
+    passwords: "costrict"
+
+metrics:
+  enabled: true # 根据情况确定是否启用 Prometheus 监控
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+
+
+
+backup:
+  enabled: true
+  cronjob:
+    timeZone: Asia/Shanghai
+    schedule: "0 0 * * *"
+    successfulJobsHistoryLimit: 1
+    storage:
+      enabled: true
+      size: 50Gi
+      accessModes:
+        - ReadWriteMany
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+

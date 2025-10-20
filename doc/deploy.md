@@ -121,15 +121,14 @@ python3 helm_deploy.py check
 
 ## 安装
 
-使用以下命令安装全部服务
+1 使用 `python3 helm_deploy.py install postgresql-ha` 先安装pgsql,然后将deployment-config.yaml 中的postgresql 注释掉。
+
+2 连接到`auth`和`quota-manager`数据库,运行[doc/sql/auth.sql](./sql/auth.sql) 和 [doc/sql/quota-manager.sql](./sql/quota-manager.sql)
+
+3 使用以下命令安装其他全部服务
 ```
 python3 helm_deploy.py install
 ```
-
-建议使用 `python3 helm_deploy.py install postgresql` 先安装pgsql, 配置数据库后在配置文件中注释postgresql 再使用`python3 helm_deploy.py install`安装其他服务
-
-### 配置数据库
-到数据库中运行[SQL](./sql/init_db.sql)
 
 ### 修改路由
 
@@ -137,6 +136,10 @@ python3 helm_deploy.py install
 ```
 OIDC_CLIENT_ID=7c51a6b92dfebfa55d96
 OIDC_CLIENT_SECRET=7c51a6b92dfebfa55d96
+```
+其中 TRUSTED_ADDRESSES 可以使用命令查看
+```
+kubectl cluster-info dump | grep -i service-cluster-ip-range
 ```
 ### 配置casdoor
 

@@ -2,6 +2,8 @@
 
 预构建镜像
 
+请在当前目录运行
+
 ```shell
 wget https://get.helm.sh/helm-v3.18.6-linux-amd64.tar.gz
 tar -zxf helm-v3.18.6-linux-amd64.tar.gz
@@ -10,6 +12,7 @@ docker build -t costrict-helm:v1 -f helm-Dockerfile .
 
 运行
 
+请到项目根目录运行
 ```shell
 docker run -d \
   --network host \

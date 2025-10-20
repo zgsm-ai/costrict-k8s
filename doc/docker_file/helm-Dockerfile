@@ -19,9 +19,9 @@ RUN apt-get update && \
         tar \
         gzip \
         bash-completion \
+        vim \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y vim
 
 # 验证 Python 和 pip
 RUN python3 --version && pip3 --version
@@ -34,8 +34,9 @@ ENV HELM_VERSION=v3.18.6
 ENV HELM_ARCH=linux-amd64
 
 # 复制 Helm 二进制文件
-COPY docker_file/linux-amd64/helm /usr/local/bin/helm && \
-    chmod +x /usr/local/bin/helm
+COPY linux-amd64/helm /usr/local/bin/helm
+
+RUN chmod +x /usr/local/bin/helm
 
 # 验证 Helm 安装
 RUN helm version --short
