@@ -85,3 +85,7 @@ readinessProbe:
   periodSeconds: 20
   timeoutSeconds: 5
   failureThreshold: 3
+
+# ServiceMonitor 配置
+serviceMonitor:
+  enabled: true

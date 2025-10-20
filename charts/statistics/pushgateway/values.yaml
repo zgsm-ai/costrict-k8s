@@ -40,6 +40,19 @@ service:
   port: 9091
   targetPort: 9091
 
+# ServiceMonitor 配置
+serviceMonitor:
+  enabled: true
+  name: pushgateway-costrict
+  namespace: monitoring
+  path: /metrics
+  interval: 15s
+  labels: {}
+  # 可选的 metricRelabelings 配置
+  metricRelabelings: []
+  # 可选的 relabelings 配置
+  relabelings: []
+
 # 节点选择器
 # nodeSelector:
 #   kubernetes.io/hostname: worker1

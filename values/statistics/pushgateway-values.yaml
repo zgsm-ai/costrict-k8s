@@ -60,3 +60,7 @@ pushgateway:
 
 # 时区配置
 timezone: "Asia/Shanghai"
+
+# ServiceMonitor 配置
+serviceMonitor:
+  enabled: true

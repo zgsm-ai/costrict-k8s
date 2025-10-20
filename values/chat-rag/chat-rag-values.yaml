@@ -97,3 +97,7 @@ service:
   type: ClusterIP
   port: 8888
   targetPort: 8888
+
+# ServiceMonitor 配置
+serviceMonitor:
+  enabled: true
