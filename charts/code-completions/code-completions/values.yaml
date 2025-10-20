@@ -114,7 +114,7 @@ env:
 
 # Service 配置
 service:
-  type: NodePort
+  type: ClusterIP
   port: 5000
   targetPort: 5000
   # nodePort: 32500  # 可选，如果 type=NodePort 才生效

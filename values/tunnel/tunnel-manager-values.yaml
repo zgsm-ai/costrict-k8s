@@ -53,7 +53,7 @@ persistence:
 # Service 配置
 service:
   name: tunnel-manager
-  type: NodePort
+  type: ClusterIP
   port: 8080
   targetPort: 8080
   # nodePort: 31226

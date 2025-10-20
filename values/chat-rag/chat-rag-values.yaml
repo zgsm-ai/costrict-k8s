@@ -90,3 +90,10 @@ persistence:
     - ReadWriteMany
   size: 200Gi
   mountPath: "/data"
+
+# Service 配置
+service:
+  name: chat-rag-svc
+  type: ClusterIP
+  port: 8888
+  targetPort: 8888

@@ -72,6 +72,6 @@ persistence:
 # Service 配置
 service:
   name: chat-rag-svc
-  type: NodePort
+  type: ClusterIP
   port: 8888
   targetPort: 8888

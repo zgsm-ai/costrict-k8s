@@ -7,7 +7,7 @@ global:
 higress-console:
   enabled: true
   service:
-    type: NodePort  # 或 LoadBalancer，根据需要
+    type: ClusterIP  # 或 LoadBalancer，根据需要
   image:
     repository: zgsm/higress-console
     pullPolicy: IfNotPresent

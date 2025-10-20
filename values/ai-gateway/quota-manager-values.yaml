@@ -89,7 +89,7 @@ storage:
 
 # Service 配置
 service:
-  type: NodePort
+  type: ClusterIP
   port: 8080
   targetPort: 8080
 

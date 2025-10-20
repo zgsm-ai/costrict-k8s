@@ -125,5 +125,6 @@ resources:
 service:
   http:
     enabled: true
+    nodePort: 32080
   tls:
-    nodePort: 30444
+    nodePort: 32443

@@ -150,7 +150,7 @@ config:
 # Service 配置
 service:
   name: codebase-querier-svc
-  type: NodePort
+  type: ClusterIP
   port: 8888
   targetPort: 8888
   # nodePort: 32001

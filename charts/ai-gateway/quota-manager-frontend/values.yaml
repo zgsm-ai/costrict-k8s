@@ -78,7 +78,7 @@ readinessProbe:
 # Service 配置
 service:
   name: quota-manager-frontend-svc
-  type: NodePort
+  type: ClusterIP
   port: 80
   targetPort: 80
   # nodePort: 30080  # 可选，如果不指定会自动分配
