@@ -106,7 +106,7 @@ database:
   type: "postgres"  # mysql or postgres
 
   # Database server hostname or IP address
-  host: "postgresql"
+  host: "postgresql-ha-pgpool"
 
   # Database server port number
   port: 5432

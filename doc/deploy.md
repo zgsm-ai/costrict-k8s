@@ -36,6 +36,7 @@
 
 ```
 kubectl create ns costrict
+kubectl create ns costrict-cotun
 ```
 
 ### 了解配置文件

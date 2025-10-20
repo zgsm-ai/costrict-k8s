@@ -41,7 +41,7 @@ env:
 config:
   conf.yaml: |
     database:
-      host: "postgresql"
+      host: "postgresql-ha-pgpool"
       port: 5432
       user: "costrict"
       password: "costrict"
@@ -49,7 +49,7 @@ config:
       sslmode: "disable"
 
     auth_database:
-      host: "postgresql"
+      host: "postgresql-ha-pgpool"
       port: 5432
       user: "costrict"
       password: "costrict"

@@ -43,7 +43,7 @@ config:
       UserInfoHeader: "x-userinfo"
     Database:
       Driver: postgres
-      DataSource: postgres://costrict:costrict@postgresql:5432/codebase_embedder?sslmode=disable
+      DataSource: postgres://costrict:costrict@postgresql-ha-pgpool:5432/codebase_embedder?sslmode=disable
       AutoMigrate:
         enable: true    
     IndexTask:

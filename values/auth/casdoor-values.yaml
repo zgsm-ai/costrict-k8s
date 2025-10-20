@@ -2,7 +2,7 @@ database:
   # 已经在数据库中创建数据库
   databaseName: casdoor
   driver: postgres
-  host: postgresql
+  host: "postgresql-ha-pgpool"
   password: costrict
   port: "5432"
   sslMode: disable

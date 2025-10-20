@@ -21,7 +21,7 @@ reviewManager:
   config:
     config.local.yaml: |
       database:
-        host: postgresql
+        host: "postgresql-ha-pgpool"
         port: 5432
         user: costrict
         password: costrict
@@ -71,7 +71,7 @@ issueManager:
   config:
     config.local.yaml: |
       database:
-        host: postgresql
+        host: "postgresql-ha-pgpool"
         port: 5432
         user: costrict
         password: costrict
@@ -95,7 +95,7 @@ reviewChecker:
   config:
     config.local.yaml: |
       database:
-        host: postgresql
+        host: "postgresql-ha-pgpool"
         port: 5432
         user: costrict
         password: costrict
