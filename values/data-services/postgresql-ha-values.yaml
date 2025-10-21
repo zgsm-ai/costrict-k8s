@@ -42,6 +42,21 @@ postgresql:
     # 	将客户端注销操作添加到日志文件 (默认关闭)
     logDisconnections: false
 
+
+pgpool:
+  replicaCount: 2  # 可扩展多个 Pgpool 实例
+  adminUsername: "pgpool"
+  adminPassword: "pgpool"
+  srCheckUsername: "pgpool_check"
+  srCheckPassword: "pgpool_check"
+  useLoadBalancing: true
+  logConnections: false
+  logPerNodeStatement: false
+  maxPool: ""
+  childMaxConnections: ""
+  childLifeTime: ""
+  clientIdleLimit: ""
+  connectionLifeTime: ""
   # 初始化数据库
   initdbScripts:
     costrict-init.sql: |-
@@ -54,16 +69,6 @@ postgresql:
       CREATE DATABASE codereview ENCODING 'UTF8' OWNER costrict;
       CREATE DATABASE auth ENCODING 'UTF8' OWNER costrict;
       CREATE DATABASE quota_manager ENCODING 'UTF8' OWNER costrict;
-
-pgpool:
-  replicaCount: 2  # 可扩展多个 Pgpool 实例
-  adminUsername: "pgpool"
-  adminPassword: "pgpool"
-  srCheckUsername: "pgpool_check"
-  srCheckPassword: "pgpool_check"
-  useLoadBalancing: true
-  logConnections: true
-  logPerNodeStatement: true
   resources:
     requests:
       cpu: 250m
