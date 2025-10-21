@@ -18,13 +18,54 @@
 
 准备以下环境: `k8s > v1.27.0`、 `helm >= 3`、`python >=3.6`(安装pyyaml：pip3 install PyYAML) ,如果你的环境中没有 python和helm环境，可以使用这个镜像运行容器，在这个容器中运行kubectl、python、helm等命令,也可以提前准备好[镜像](./docker_file/README.md)
 
-对于多节点，准备可用的StorageClass，比如通过nfs创建的sc。
+准备可用的StorageClass，比如通过nfs创建的sc。
 
 对于单节点服务器，不建议使用helm部署，可能存在部分服务不支持的情况，如果仍需要helm部署，请创建网络存储卷，也可以准备一个目录用于存储持久化数据，并创建hostPath类型的SC,请参考[https://github.com/rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner) ,其中[yaml文件](https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.32/deploy/local-path-storage.yaml)和[镜像](https://hub.docker.com/layers/rancher/local-path-provisioner/v0.0.32/images/sha256-64975a72cb31bda96fea61f4b59e6cca4545e531487a13fab7ba1b7aba95bd6c)下载导入和使用不在此教程中
 
 ### 导入镜像
 
-如果是离线环境，请导入所有docker镜像
+如果是离线环境，请提前导入所有docker镜像
+
+这些是部分稳定镜像，不常更新( 部分zgsm下镜像来自官方，我们只是备份一份到docker hub)：
+```
+# apisix
+apache/apisix-dashboard:3.0.0-alpine
+docker.io/bitnami/etcd:3.5.10-debian-11-r2
+apache/apisix:3.9.1-debian
+
+# casdoor 
+zgsm/casdoor:v2.0.6
+
+# oidc
+zgsm/oidc-auth:v1.2.8
+
+# higress
+zgsm/higress-console:2.1.6
+zgsm/higress-prometheus:v2.40.7
+zgsm/higress-grafana:9.3.6
+zgsm/higress-loki:2.9.4
+
+# pgsql
+docker.io/bitnami/postgresql:17.4.0-debian-12-r17
+docker.io/bitnami/os-shell:12-debian-12-r43
+docker.io/bitnami/postgres-exporter:0.17.1-debian-12-r6
+docker.io/bitnami/postgresql:17.4.0-debian-12-r17
+
+# pgsql-ha
+docker.io/bitnami/pgpool:4.6.3-debian-12-r0
+docker.io/bitnami/postgres-exporter:0.17.1-debian-12-r16
+docker.io/bitnami/postgresql-repmgr:17.6.0-debian-12-r2
+
+# weaviate
+semitechnologies/weaviate:1.30.0
+
+# redis
+docker.io/redis:7.2.4
+
+# nginx
+nginx:1.27.1
+
+```
 
 ### 创建k8s存储类(StorageClass)
 

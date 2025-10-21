@@ -10,7 +10,7 @@ namespace: "costrict"
 
 # 镜像配置
 image:
-  repository: "docker.io/library/nginx"
+  repository: "nginx"
   tag: "1.27.1"
   pullPolicy: IfNotPresent
 

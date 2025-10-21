@@ -87,7 +87,7 @@ auth:
     values: oidc-values.yaml
     set:
       "image.repository": "zgsm/oidc-auth"
-      "image.tag": "v1.2.5"
+      "image.tag": "v1.2.8"
 
 chat-rag:
   chat-rag:
@@ -153,7 +153,7 @@ portal:
     storageClass:
       "persistence.storageClassName": "nfs-storage"
     set:
-      "image.repository": "docker.io/library/nginx"
+      "image.repository": "nginx"
       "image.tag": "1.27.1"
 statistics:
   pushgateway:

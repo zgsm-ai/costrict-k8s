@@ -2,7 +2,7 @@
 
 # OIDC Configuration: 请和values/auth/oids-values.yaml中的一致.
 OIDC_CLIENT_ID=7c51a6b92dfebfa55d96
-OIDC_CLIENT_SECRET=7c51a6b92dfebfa55d96
+OIDC_CLIENT_SECRET=bcb3dc222a07fad21aabdd5035dadba2f09e05d6
 OIDC_DISCOVERY_ADDR=http://casdoor:8000/.well-known/openid-configuration
 OIDC_INTROSPECTION_ENDPOINT=http://casdoor:8000/api/login/oauth/introspect
 
@@ -178,7 +178,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 60,
+        "introspection_interval": 600,
         "bearer_only": true,
         "set_userinfo_header": true,
         "ssl_verify": false,
@@ -263,6 +263,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
          "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
          "introspection_endpoint_auth_method": "client_secret_basic",
          "bearer_only": true,
+         "introspection_interval": 120,
          "set_userinfo_header": true,
          "set_id_token_header": false,
          "ssl_verify": false
@@ -307,6 +308,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
          "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
          "introspection_endpoint_auth_method": "client_secret_basic",
          "bearer_only": true,
+         "introspection_interval": 120,
          "set_userinfo_header": true,
          "set_id_token_header": false,
          "ssl_verify": false
@@ -363,6 +365,7 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
         "bearer_only": true,
+        "introspection_interval": 120,
         "ssl_verify": false
       },
       "limit-req": {
@@ -555,7 +558,7 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 60,
+        "introspection_interval": 120,
         "bearer_only": true,
         "scope": "openid profile email"
       }
@@ -615,7 +618,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 60,
+        "introspection_interval": 120,
         "bearer_only": true,
         "scope": "openid profile email"
       }

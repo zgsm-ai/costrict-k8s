@@ -2,7 +2,7 @@
 image:
   pullPolicy: IfNotPresent
   repository: "zgsm/oidc-auth"
-  tag: "v1.2.5"
+  tag: "v1.2.8"
 
 replicaCount: 1
 
@@ -63,25 +63,13 @@ encrypt:
   privateKey: ""
   publicKey: ""
 
-# SMS service configuration for verification codes
+# sangfor sms 
 sms:
-  # Enable test mode. If "true", SMS won't be sent to real users.
+  clientID: ""
+  clientSecret: ""
   enabledTest: "false"
-
-  # Application ID from the SMS provider.
-  appID: ""
-
-  # API Key from the SMS provider, used for signing requests.
-  apiKey: ""
-
-  # Merchant ID, if required by the provider.
-  mchID: "1067386"
-
-  # Pre-approved message template ID for the verification code.
-  templateID: "70300181"
-
-  # API endpoint for the send SMS action.
-  sendURL: "https://apis.shlianlu.com/sms/trade/template/send"
+  sendURL: ""
+  tokenURL: ""
 
 # GitHub star synchronization configuration
 syncStar:

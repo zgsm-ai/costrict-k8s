@@ -13,4 +13,4 @@ image:
   name: casdoor
   pullPolicy: IfNotPresent
   repository: "zgsm"
-  tag: v2.0.1
+  tag: v2.0.6
