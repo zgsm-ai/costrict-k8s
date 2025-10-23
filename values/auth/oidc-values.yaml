@@ -43,6 +43,12 @@ server:
     # Maximum time an idle connection will remain in the pool before being closed.
     idleConnTimeout: "90s"
 
+# 根据实际情况调整
+rollingUpdate:
+  # 由于replicaCount 所以不允许有pod未运行
+  maxUnavailable: 0
+  maxSurge: "25%"
+
 # OAuth provider configurations for authentication
 providers:
   casdoor:

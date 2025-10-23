@@ -26,26 +26,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.containerPort }}
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.livenessProbe.httpGet.path }}
-              port: {{ .Values.livenessProbe.httpGet.port }}
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: {{ .Values.readinessProbe.httpGet.path }}
-              port: {{ .Values.readinessProbe.httpGet.port }}
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
-          env:
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              value: "{{ $value }}"
-            {{- end }}
+          volumeMounts:
+            - mountPath: /app/config.yaml
+              name: config-volume
+              subPath: config.yaml
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: {{ .Values.appName }}
+          name: config-volume

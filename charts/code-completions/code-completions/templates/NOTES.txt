@@ -16,9 +16,6 @@ Service:
 
 Image: {{ .Values.image.repository }}
 
-Environment:
-  MAIN_MODEL_TYPE: {{ .Values.env.MAIN_MODEL_TYPE }}
-  OPENAI_MODEL: {{ .Values.env.OPENAI_MODEL }}
 
 Check the pod status:
   kubectl get pods -n {{ .Release.Namespace }} -l app={{ .Values.appName }}

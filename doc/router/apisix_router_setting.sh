@@ -419,7 +419,7 @@ echo "正在配置 Code Completion 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
     "id": "code-completion",
     "nodes": {
-      "code-completion-svc:5000": 1
+      "code-completion:8080": 1
     },
     "type": "roundrobin"
   }'
