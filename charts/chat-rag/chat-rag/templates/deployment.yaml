@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: {{ .Values.appName }}
+        # loki-log-enabled: {{ .Values.lokiLogEnabled | default "true" | quote }}
     spec:
       containers:
         - name: {{ .Values.containerName }}

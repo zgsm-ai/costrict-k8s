@@ -37,7 +37,7 @@ higress-console:
         size: 10Gi
 
     loki:
-      enabled: true
+      enabled: false
       image:
         repository: zgsm/higress-loki
         tag: 2.9.4

@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: {{ .Values.reviewManager.appName }}
+        # loki-log-enabled: {{ .Values.lokiLogEnabled | default "true" | quote }}
     spec:
       containers:
         - name: {{ .Values.reviewManager.containerName }}
