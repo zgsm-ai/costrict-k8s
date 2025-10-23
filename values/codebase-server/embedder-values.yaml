@@ -14,7 +14,7 @@ replicaCount: 1
 image:
   repository: zgsm/codebase-embedder
   pullPolicy: IfNotPresent
-  tag: "v0.1.1"
+  tag: "v0.2.6"
 
 # 资源限制
 resources:
@@ -22,8 +22,8 @@ resources:
     cpu: "100m"
     memory: 100Mi
   limits:
-    cpu: "8"
-    memory: 16Gi
+    cpu: "6"
+    memory: 12Gi
 
 # 配置文件参数
 config:
@@ -57,19 +57,20 @@ config:
         OverlapTokens: 100
         MaxTokensPerChunk: 1000
         EnableMarkdownParsing: false
+        EnableOpenAPIParsing: false
       GraphTask:
         MaxConcurrency: 100
         Timeout: 18000s
         ConfFile: "etc/codegraph.yaml"
-    
+
     Cleaner:
       Cron: "0 0 * * *"
       CodebaseExpireDays: 30
-    
+
     Redis:
       Addr: redis-master:6379
       DefaultExpiration: 1h
-    
+
     VectorStore:
       Type: weaviate
       Timeout: 60s
@@ -114,12 +115,13 @@ config:
       max_concurrency: 5
       skip_patterns: []
     TokenLimit:
-      max_running_tasks: 100  
+      max_running_tasks: 200  
       enabled: true
     HealthCheck:
       Enabled: true
       URL: http://codebase-querier-svc/codebase-indexer/api/v1/index/summary
       Timeout: 3s
+
 
 
 # Service 配置

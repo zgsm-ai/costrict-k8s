@@ -23,8 +23,8 @@ spec:
             - containerPort: {{ .Values.containerPort }}
           volumeMounts:
             - name: config
-              mountPath: /app/etc/chat-api.yaml
-              subPath: chat-api.yaml
+              configMap:
+                name: chat-rag-config 
             - name: pvc-storage
               mountPath: {{ .Values.persistence.mountPath }}
           args: ["-f", "/app/etc/chat-api.yaml"]
@@ -37,6 +37,8 @@ spec:
             items:
               - key: chat-api.yaml
                 path: chat-api.yaml
+              - key: rules.yaml
+                path: rules.yaml
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: {{ .Values.appName }}-storage

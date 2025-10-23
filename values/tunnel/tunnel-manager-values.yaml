@@ -40,7 +40,7 @@ config:
       cache: "/data"
     port_range:
       start: 30000
-      end: 31000
+      end: 31500
 
 # 持久化存储配置
 persistence:

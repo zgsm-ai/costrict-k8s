@@ -10,6 +10,10 @@ global:
     existingSecret: ""
   defaultStorageClass: nfs-storage # 替换为你的 StorageClass
 
+persistence:
+    enabled: true
+    size: 50Gi
+
 postgresql:
   replicaCount: 3  # 至少 3 个节点以保证 quorum
   syncReplication: true
@@ -21,9 +25,6 @@ postgresql:
     limits:
       cpu: "6"
       memory: 12Gi
-  persistence:
-    enabled: true
-    size: 20Gi
   tls:
     enabled: false  # 若启用，请配置证书
     # kubectl create secret generic postgresql-tls-secret --from-file=./cert.crt --from-file=./cert.key --from-file=./ca.crt
@@ -41,6 +42,18 @@ postgresql:
     logConnections: false
     # 	将客户端注销操作添加到日志文件 (默认关闭)
     logDisconnections: false
+  # 初始化数据库
+  initdbScripts:
+    costrict-init.sql: |-
+      -- Step 1: 创建用户（角色）costrict，并设置密码
+      CREATE USER costrict WITH PASSWORD 'costrict';
+      -- Step 2: 创建多个数据库，并指定 owner 为 costrict
+      -- 这样 costrict 就拥有完全控制权（建表、删表、改结构等）
+      CREATE DATABASE codebase_embedder ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE casdoor ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE codereview ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE auth ENCODING 'UTF8' OWNER costrict;
+      CREATE DATABASE quota_manager ENCODING 'UTF8' OWNER costrict;
 
 
 pgpool:
@@ -57,18 +70,6 @@ pgpool:
   childLifeTime: ""
   clientIdleLimit: ""
   connectionLifeTime: ""
-  # 初始化数据库
-  initdbScripts:
-    costrict-init.sql: |-
-      -- Step 1: 创建用户（角色）costrict，并设置密码
-      CREATE USER costrict WITH PASSWORD 'costrict';
-      -- Step 2: 创建多个数据库，并指定 owner 为 costrict
-      -- 这样 costrict 就拥有完全控制权（建表、删表、改结构等）
-      CREATE DATABASE codebase_embedder ENCODING 'UTF8' OWNER costrict;
-      CREATE DATABASE casdoor ENCODING 'UTF8' OWNER costrict;
-      CREATE DATABASE codereview ENCODING 'UTF8' OWNER costrict;
-      CREATE DATABASE auth ENCODING 'UTF8' OWNER costrict;
-      CREATE DATABASE quota_manager ENCODING 'UTF8' OWNER costrict;
   resources:
     requests:
       cpu: 250m
@@ -98,6 +99,7 @@ backup:
     storage:
       enabled: true
       size: 50Gi
+      resourcePolicy: "keep"
       accessModes:
         - ReadWriteMany
 

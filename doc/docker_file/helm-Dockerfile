@@ -5,6 +5,23 @@ FROM ubuntu:22.04
 # 设置非交互模式
 ENV DEBIAN_FRONTEND=noninteractive
 
+# 部分情况下可能需要还原，如本公司内部源：
+
+# 更换为阿里云源
+# RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.sangfor.com/nexus/repository/ubuntu-aliyun/|g' /etc/apt/sources.list && \
+#     sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.sangfor.com/nexus/repository/ubuntu-aliyun/|g' /etc/apt/sources.list && \
+#     apt-get update && \
+#     apt-get clean
+
+# pip 换源
+# RUN mkdir -p /root/.pip && \
+#     echo "[global]" > /root/.pip/pip.conf && \
+#     echo "index-url = http://mirrors.sangfor.org/pypi/simple" >> /root/.pip/pip.conf && \
+#     echo "extra-index-url = http://mirrors.sangfor.org/sfpypi/simple" >> /root/.pip/pip.conf && \
+#     echo "[install]" >> /root/.pip/pip.conf && \
+#     echo "trusted-host = mirrors.sangfor.org" >> /root/.pip/pip.conf
+
+
 # 安装 Python3、pip、网络工具和必要依赖
 RUN apt-get update && \
     apt-get install -y \

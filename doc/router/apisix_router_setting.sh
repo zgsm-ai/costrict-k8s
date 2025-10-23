@@ -350,7 +350,7 @@ RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE
     "id": "issue-resources",
     "name": "issue-resources",
     "uris": ["/issue/*"],
-    "upstream_id": "portal"
+    "upstream_id": "issue-manager"
   }')
 
 check_http_status "Code Review - Issue" "$RESPONSE"

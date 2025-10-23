@@ -39,17 +39,11 @@ tunnel:
     values: tunnel-manager-values.yaml
     storageClass:
       "persistence.storageClassName": "nfs-storage"
-    set:
-      "image.repository": "docker.io/zgsm/tunnel-manager"
-      "image.tag": "v0.2.4"
   cotun:
     # 可以移动到其他命名空间,需要修改调用方配置文件. values/codebase-server/querier-values.yaml
     namespace: costrict-cotun
     chart: cotun-0.1.0.tgz
     values: cotun-values.yaml
-    set:
-      "image.repository": "docker.io/zgsm/cotun"
-      "image.tag": "v1.1.0"
 
 ai-gateway:
   higress:
@@ -63,15 +57,11 @@ ai-gateway:
   quota-manager:
     chart: quota-manager-0.1.0.tgz
     values: quota-manager-values.yaml
-    set:
-      "image.repository": "zgsm/quota-manager"
-      "image.tag": "1.0.22"
+   
   quota-manager-frontend:
     chart: quota-manager-frontend-0.1.0.tgz
     values: quota-manager-frontend-values.yaml
-    set:
-      "image.repository": "zgsm/quota-manager-frontend"
-      "image.tag": "1.0.8"
+    
 
 auth:
   apisix:
@@ -85,9 +75,7 @@ auth:
   oidc-auth:
     chart: oidc-auth-1.0.0.tgz
     values: oidc-values.yaml
-    set:
-      "image.repository": "zgsm/oidc-auth"
-      "image.tag": "v1.2.8"
+  
 
 chat-rag:
   chat-rag:
@@ -95,31 +83,18 @@ chat-rag:
     values: chat-rag-values.yaml
     storageClass:
       "persistence.storageClassName": "nfs-storage"
-    set:
-      "image.repository": "zgsm/chat-rag"
-      "image.tag": "v1.1.8"
+
 
 code-completions:
   code-completions:
     chart: code-completions-0.1.0.tgz
     values: code-completions-values.yaml
-    set:
-      "image.repository": "zgsm/code-completions"
-      "image.tag": "1.6.4"
+
     
 code-review:
   code-review:
     chart: code-review-0.1.0.tgz
     values: code-review-values.yaml
-    set: 
-      "reviewManager.image.repository": "zgsm/review-manager"
-      "reviewManager.image.tag": "hotfix-v2"
-      "reviewWorker.image.repository": "zgsm/review-manager"
-      "reviewWorker.image.tag": "hotfix-v2"
-      "issueManager.image.repository": "zgsm/issue-manager"
-      "issueManager.image.tag": "hotfix-v1"
-      "reviewChecker.image.repository": "zgsm/review-checker"
-      "reviewChecker.image.tag": "1.1.2"
 
       
 
@@ -127,24 +102,17 @@ codebase-server:
   codebase-embedder:
     chart: codebase-embedder-0.1.0.tgz
     values: embedder-values.yaml
-    set:
-      "image.repository": "zgsm/codebase-embedder"
-      "image.tag": "v0.1.1"
+
   codebase-querier:
     chart: codebase-querier-0.1.0.tgz
     values: querier-values.yaml
-    set:
-      "image.repository": "zgsm/codebase-querier"
-      "image.tag": "v0.1.5"
+
 
 
 frontend:
   credit-manager:
     chart: credit-manager-1.0.0.tgz
     values: credit-manager-values.yaml
-    set:
-      "image.repository": "zgsm/credit-manager"
-      "image.tag": "v1.1.6"
 
 portal:
   portal:
@@ -152,9 +120,6 @@ portal:
     values: portal-values.yaml
     storageClass:
       "persistence.storageClassName": "nfs-storage"
-    set:
-      "image.repository": "nginx"
-      "image.tag": "1.27.1"
 statistics:
   pushgateway:
     chart: pushgateway-0.1.0.tgz
