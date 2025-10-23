@@ -4,13 +4,15 @@
 
 ## 介绍
 
+<font color='blue'>k8s-helm 方案是较复杂的自定义参数较多的方案，大部分配置需要手动配置，请根据实际情况决定是否选择此部署方案</font>
+
 部署只提供 linux amd64 k8s集群模式部署方案,需要支持helm 3.18, 部署人员需要知道以下知识点:
 
 1. docker
 2. k8s
 3. helm
 
-注意：此部署只部署服务，相关配置还需要用户自行配置，**并且不部署Prometheus以及不同服务的 ServiceMonitor**
+注意：此部署只部署服务，相关配置还需要用户自行配置，相关的运维工具，如loki,grafana都包含，**并且不部署Prometheus以及不同服务的 ServiceMonitor**
 
 ## 前期准备
 
@@ -67,9 +69,11 @@ nginx:1.27.1
 
 ```
 
+<font color='red'>其他Costrict 的业务镜像，可以参考：[Docker compose方案](https://github.com/zgsm-ai/zgsm-backend-deploy/) 中的描述,或者联系我们。 </font>
+
 ### 创建k8s存储类(StorageClass)
 
-根据实际的业务需求情况，创建sc
+根据实际的业务需求情况，创建sc，用于存储持久化数据。
 
 ### 创建namespace
 
@@ -148,12 +152,13 @@ chat-rag:
 ### 修改helm-values
 
  
-1. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml
+1. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml的配置，因为这个配置需要访问cotun,默认命名空间是：costrict-cotun
 
 ### 修改自定义设置
 
 1. `values/auth/oidc-values.yaml` 修改 clientID clientSecret,登录认证时需要
 2. `values/ai-gateway/quota-manager-values.yaml` 修改signing_key, 用于签名配额
+3. `values/auth/apisix-values.yaml` 修改相关的密钥和密码,以及需要暴露的apisix-gateway端口，这个端口将用于访问costrict的入口。
 
 ## 检查配置完整度
 
@@ -175,17 +180,22 @@ python3 helm_deploy.py install
 ### 修改路由
 
 修改[路由配置脚本](./router/apisix_router_settin.sh) 的参数，配置路由,尤其是：
-```
+```bash
+# client Id
 OIDC_CLIENT_ID=7c51a6b92dfebfa55d96
+# client secret
 OIDC_CLIENT_SECRET=7c51a6b92dfebfa55d96
+# apisix-admin 的地址，可以通过  kubectl get svc -n <namespace> 获取, 由于是clusterip,请在集群内执行脚本。
+APISIX_ADDR=10.233.63.159:9180
+# apisix的密钥，可在 values/auth/apisix-values.yaml 中自定义
+AUTH="X-API-KEY: costrict-2025-admin"
 ```
-其中 TRUSTED_ADDRESSES 可以使用命令查看
-```
-kubectl cluster-info dump | grep -i service-cluster-ip-range
-```
+
 ### 配置casdoor
 
 登录casdoor并配置
+
+默认用户名密码
 
 ```
 admin
@@ -196,10 +206,27 @@ admin
 
 重定向url中添加服务器地址
 
+casdoor具体配置，请根据casdoor官方文档。
+
+
 ### 配置higress
 
-访问higress 并设置初始密码如：admin test123,并按照官方文档配置安装。
+访问higress 并设置初始密码如：admin test123, 并按照官方文档配置。
 
+我们提供了[配额服务](https://github.com/zgsm-ai/quota-manager) 和 [higress 配额插件](https://github.com/zgsm-ai/higress/blob/main/plugins/wasm-go/extensions/ai-quota/main.go) 请自行获取
+
+### Portal
+
+portal是一个使用nginx提供反向代理代理静态文件的服务，里面包含了一些costrict的客户端，错误码，wasm插件等，自行选择配置。
+
+可参考[docker compose 部署方式](https://github.com/zgsm-ai/zgsm-backend-deploy/tree/main/portal/data) 中的内容。
+
+
+## 使用
+
+```
+访问 apisix-gateway 这个k8s service的端口即可，costrict插件中设置的baseUrl也是访问这个端口即可。
+```
 
 # 卸载
 
