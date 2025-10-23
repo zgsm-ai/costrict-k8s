@@ -38,7 +38,7 @@ data:
             }
             # wasm
             location /wasm/ {
-                alias /var/www/wasm;
+                alias /var/www/wasm/;
             }
 
 

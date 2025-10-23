@@ -55,7 +55,7 @@ config:
     proxy_config:
       mode: "full_path"              # 使用全路径模式
       port_manager_url: "http://127.0.0.1:31226"
-      forward_url: "http://codebase-indexer-svc.shenma.svc.cluster.local:8888"  # 转发地址
+      forward_url: "http://codebase-indexer-svc:8888"  # 转发地址
       dynamic_port: true
       routes:                        # 路由规则数组
         - path_prefix: "/codebase-indexer/api/v1/register"     # API服务路径前缀

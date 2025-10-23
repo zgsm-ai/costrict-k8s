@@ -211,7 +211,7 @@ casdoor具体配置，请根据casdoor官方文档。
 
 ### 配置higress
 
-访问higress 并设置初始密码如：admin test123, 并按照官方文档配置。
+访问higress 并设置初始密码如：admin costrict, 并按照官方文档配置。
 
 我们提供了[配额服务](https://github.com/zgsm-ai/quota-manager) 和 [higress 配额插件](https://github.com/zgsm-ai/higress/blob/main/plugins/wasm-go/extensions/ai-quota/main.go) 请自行获取
 

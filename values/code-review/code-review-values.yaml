@@ -12,7 +12,7 @@ reviewManager:
   image:
     repository: zgsm/review-manager
     pullPolicy: IfNotPresent
-    tag: "hotfix-v2"
+    tag: "1.1.6"
   service:
     name: review-manager
     type: ClusterIP
@@ -29,17 +29,26 @@ reviewManager:
       redis:
         host: redis-master
         port: 6379
-        db: 10
+        db: 2
       asynq:
         concurrency: 20
         queues:
-          default: 5
-          critical: 20
+          default: 10
+          critical: 40
+      code_file:
+        filter_types:
+          - "declaration.function"
+          - "definition.function"
+          - "declaration.method"
+      kbcenter:
+        skip_repository_check: true
       http_client:
+        max_retries: 0
         services:
           issueManager:
             base_url: "http://issue-manager:8080/issue-manager/api/v1"
           kbCenter:
+            timeout: 10
             base_url: "http://codebase-querier-svc:8888/codebase-indexer/api/v1"
 
 # review-worker 配置
@@ -50,7 +59,7 @@ reviewWorker:
   image:
     repository: zgsm/review-manager
     pullPolicy: IfNotPresent
-    tag: "hotfix-v2"
+    tag: "1.1.6"
   # review-worker 使用与 review-manager 相同的配置
 
 # issue-manager 配置
@@ -62,7 +71,7 @@ issueManager:
   image:
     repository: zgsm/issue-manager
     pullPolicy: IfNotPresent
-    tag: "hotfix-v1"
+    tag: "1.1.6"
   service:
     name: issue-manager
     type: ClusterIP
@@ -86,7 +95,7 @@ reviewChecker:
   image:
     repository: zgsm/review-checker
     pullPolicy: IfNotPresent
-    tag: "1.1.2"
+    tag: "1.1.6"
   service:
     name: review-checker
     type: ClusterIP
@@ -95,6 +104,7 @@ reviewChecker:
   config:
     config.local.yaml: |
       database:
+        type: postgres
         host: "postgresql-ha-pgpool"
         port: 5432
         user: costrict
@@ -103,20 +113,28 @@ reviewChecker:
       redis:
         host: redis-master
         port: 6379
-        db: 11
+        db: 2
+      log:
+        level: info
       chat_rag:
         model: "qwen25-lora-base"
-        stage_models:
-          check: "qwen25-lora"
-          review: "qwen25-lora-base"
-          annotation: "qwen25-lora-base"
-          title: "qwen25-lora-base"
+      header_propagation:
+        headers:
+          - "X-Request-ID"
+          - "X-Costrict-Version"
+          - "X-User-ID"
+          - "X-Trace-ID"
+          - "x-quota-identity"
+          - "Authorization"
       http_client:
         services:
           chatRag:
             base_url: "http://chat-rag-svc:8888/chat-rag/api/v1"
+            timeout: 60
           kbCenter:
             base_url: "http://codebase-querier-svc:8888/codebase-indexer/api/v1"
+            timeout: 10
+
 
 # 资源限制配置
 resources:
