@@ -7,13 +7,14 @@ OIDC_DISCOVERY_ADDR=http://casdoor:8000/.well-known/openid-configuration
 OIDC_INTROSPECTION_ENDPOINT=http://casdoor:8000/api/login/oauth/introspect
 
 # apisix 管理地址
-APISIX_ADDR=10.233.31.155:9180
+APISIX_ADDR=10.233.63.159:9180
 # 认证头,和 helm yaml中一致
 AUTH="X-API-KEY: costrict-2025-admin"
-# apisix trusted_addresses	k8s 代理层的 IP
-TRUSTED_ADDRESSES="10.233.0.0/18"
+# 是否允许apisix插件(主要是 limit-req和limit-count)无法使用时，依旧可以访问服务，内网可信用户可以设置维true.
+Allow_DEGRADATION="false"
 
 TYPE="Content-Type: application/json"
+
 
 # 初始化成功和失败的模块计数器
 SUCCESS_MODULES=0
@@ -30,46 +31,101 @@ check_module_status() {
     fi
 }
 
+
+# 全局数组用于记录成功和失败的名称
+SUCCESS_NAMES=()
+FAILURE_NAMES=()
+
+# 函数1: 检查HTTP响应状态
+# 参数1: 名称
+# 参数2: 内容
+check_http_status() {
+    local name="$1"
+    local content="$2"
+    echo $content
+    # 使用正则表达式检查响应内容
+    if [[ "$content" == *'{"key":"/apisix/'* ]]; then
+        echo "$name 配置成功"
+        SUCCESS_NAMES+=("$name")
+    else
+        echo "$name 配置失败"
+        FAILURE_NAMES+=("$name")
+    fi
+}
+
+# 函数2: 输出详细统计结果
+summary() {
+    echo "=== 配置检查详细结果 ==="
+    echo "成功配置的项目:"
+    if [ ${#SUCCESS_NAMES[@]} -eq 0 ]; then
+        echo "  无"
+    else
+        for name in "${SUCCESS_NAMES[@]}"; do
+            echo "  - $name"
+        done
+    fi
+    
+    echo ""
+    echo "失败配置的项目:"
+    if [ ${#FAILURE_NAMES[@]} -eq 0 ]; then
+        echo "  无"
+    else
+        for name in "${FAILURE_NAMES[@]}"; do
+            echo "  - $name"
+        done
+    fi
+    
+    echo ""
+    echo "总计: 成功 ${#SUCCESS_NAMES[@]}, 失败 ${#FAILURE_NAMES[@]}"
+}
+
 # ****
-# AI Gateway Configuration
-echo "正在配置 AI Gateway 模块..."
+# OIDC Auth Configuration
+echo "正在配置 OIDC Auth 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "id": "ai-gateway",
+    "id": "oidc-auth",
     "nodes": {
-      "higress-gateway:80": 1
+      "oidc-auth:8080": 1
     },
     "type": "roundrobin"
   }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "uris": [
-      "/ai-gateway/api/v1/models"
-    ],
-    "id": "ai-gateway",
-    "name": "ai-gateway",
-    "upstream_id": "ai-gateway",
-    "status": 1,
-    "plugins": {
-      "limit-count": {
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "id": "oidc-auth",
+  "name": "oidc-auth-routes",
+  "uris": [
+    "/oidc-auth/api/v1/plugin*",
+    "/oidc-auth/api/v1/manager*"
+  ],
+  "plugins": {
+    "limit-count": {
         "count": 60,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+      "limit-req": {
+        "rate": 10,
+        "burst": 30,
+        "rejected_code": 429,
+        "key_type": "var_combination",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
+      },
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
-    }
-  }'
-check_module_status "AI Gateway"
+  },
+  "upstream_id": "oidc-auth"
+}')
+check_http_status "OIDC Auth" "$RESPONSE"
+
 
 # ****
 # Casdoor Configuration
@@ -82,7 +138,10 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "id": "casdoor",
+  "name": "casdoor-routes",
+  "upstream_id": "casdoor",
   "uris": [
     "/login/oauth/*",
     "/api/login/oauth/*",
@@ -99,29 +158,77 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
   ],
   "plugins": {
     "limit-count": {
-      "count": 120,
-      "key": "$remote_addr",
-      "key_type": "var",
+      "count": 600,
+      "key_type": "var_combination",
       "policy": "local",
       "rejected_code": 429,
       "show_limit_quota_header": true,
-      "time_window": 60
+      "time_window": 60,
+      "allow_degradation": '$Allow_DEGRADATION'
     },
-    "real-ip": {
-      "header": "X-Forwarded-For",
-      "recursive": true,
-      "source": "header",
-      "trusted_addresses": [
-        "'$TRUSTED_ADDRESSES'"
-      ]
+    "limit-req": {
+      "rate": 60,
+      "burst": 300,
+      "rejected_code": 429,
+      "key_type": "var_combination",
+      "key": "$http_zgsm_client_id$http_authorization",
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
     }
-  },
-  "id": "casdoor",
-  "name": "casdoor-routes",
-  "upstream_id": "casdoor"
-}'
-check_module_status "Casdoor"
+  }
+}')
+check_http_status "Casdoor" "$RESPONSE"
 
+
+# ****
+# AI Gateway Configuration
+echo "正在配置 AI Gateway 模块..."
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "id": "ai-gateway",
+    "nodes": {
+      "higress-gateway:80": 1
+    },
+    "type": "roundrobin"
+  }'
+
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "uris": [
+    "/ai-gateway/api/v1/models"
+  ],
+  "id": "ai-gateway",
+  "name": "ai-gateway",
+  "upstream_id": "ai-gateway",
+  "status": 1,
+  "plugins": {
+    "limit-count": {
+      "count": 60,
+      "key_type": "var_combination",
+      "policy": "local",
+      "rejected_code": 429,
+      "show_limit_quota_header": true,
+      "time_window": 60,
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "limit-req": {
+      "rate": 10,
+      "burst": 20,
+      "rejected_code": 429,
+      "key_type": "var_combination",
+      "key": "$http_zgsm_client_id$http_authorization",
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "request-id": {
+      "header_name": "X-Request-Id",
+      "include_in_response": true,
+      "algorithm": "uuid"
+    }
+  }
+}')
+check_http_status "AI Gateway" "$RESPONSE"
 
 # ****
 # ChatRAG Configuration
@@ -134,59 +241,50 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "uris": ["/chat-rag/api/v1/chat/*"],
-    "id": "chat-rag",
-    "name": "chat-rag-api",
-    "upstream_id": "chat-rag",
-    "plugins": {
-      "request-id": {
-        "include_in_response": false
-      },
-      "file-logger": {
-        "include_req_body": false,
-        "include_resp_body": false,
-        "path": "logs/access.log"
-      },
-      "limit-count": {
-        "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
-        "policy": "local",
-        "rejected_code": 429,
-        "show_limit_quota_header": true,
-        "time_window": 60
-      },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
-      },
-      "limit-req": {
-        "rate": 300,
-        "burst": 300,
-        "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
-      },
-      "openid-connect": {
-        "client_id": "'"$OIDC_CLIENT_ID"'",
-        "client_secret": "'"$OIDC_CLIENT_SECRET"'",
-        "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
-        "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
-        "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 600,
-        "bearer_only": true,
-        "set_userinfo_header": true,
-        "ssl_verify": false,
-        "scope": "openid profile email"
-      }
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "uris": ["/chat-rag/api/v1/chat/*"],
+  "id": "chat-rag",
+  "name": "chat-rag-api",
+  "upstream_id": "chat-rag",
+  "plugins": {
+    "limit-req": {
+      "rate": 10,
+      "burst": 20,
+      "rejected_code": 429,
+      "key_type": "var_combination",
+      "key": "$http_zgsm_client_id$http_authorization",
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "limit-count": {
+      "count": 120,
+      "key": "$http_zgsm_client_id$http_authorization",
+      "key_type": "var_combination",
+      "policy": "local",
+      "rejected_code": 429,
+      "show_limit_quota_header": true,
+      "time_window": 60,
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "openid-connect": {
+      "client_id": "'"$OIDC_CLIENT_ID"'",
+      "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+      "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+      "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+      "introspection_endpoint_auth_method": "client_secret_basic",
+      "introspection_interval": 600,
+      "bearer_only": true,
+      "set_userinfo_header": true,
+      "ssl_verify": false,
+      "scope": "openid profile email"
+    },
+    "request-id": {
+      "header_name": "X-Request-Id",
+      "include_in_response": true,
+      "algorithm": "uuid"
     }
-  }'
-check_module_status "ChatRAG"
+  }
+}')
+check_http_status "ChatRAG" "$RESPONSE"
 
 # ****
 # CLI Tools Configuration
@@ -199,48 +297,45 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
   
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "id": "costrict-apps",
     "uri": "/costrict/*",
     "name": "costrict-apps",
     "upstream_id": "costrict-apps",
     "plugins": {
-      "file-logger": {
-        "include_req_body": false,
-        "include_resp_body": false,
-        "only_req_line": true,
-        "path": "logs/access.log"
+      "limit-req": {
+        "rate": 10,
+        "burst": 20,
+        "rejected_code": 429,
+        "key_type": "var_combination",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
-        "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "count": 180,
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
     }
-  }'
-check_module_status "CLI Tools"
+  }')
+check_http_status "CLI Tools (Portal)" "$RESPONSE"
 
 # ****
 # Code Review Configuration
 echo "正在配置 Code Review 模块..."
-curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "id": "review-manager",
-    "nodes": {
-      "review-manager:8080": 1
-    },
-    "type": "roundrobin"
-  }'
+
+# Issue Configuration
+echo "正在配置 Code Review - Issue 模块..."
 
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "issue-manager",
@@ -250,100 +345,77 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+
+RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "id": "issue-resources",
+    "name": "issue-resources",
+    "uris": ["/issue/*"],
+    "upstream_id": "portal"
+  }')
+
+check_http_status "Code Review - Issue" "$RESPONSE"
+
+# Manager
+echo "正在配置 Code Review - Manager 模块..."
+
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "id": "review-manager",
+  "nodes": {
+    "review-manager:8080": 1
+  },
+  "type": "roundrobin"
+}'
+
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "review-manager",
     "name": "review-manager-api",
     "uris": ["/review-manager/*"],
     "upstream_id": "review-manager",
     "plugins": {
       "openid-connect": {
-         "client_id": "'"$OIDC_CLIENT_ID"'",
-         "client_secret": "'"$OIDC_CLIENT_SECRET"'",
-         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
-         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
-         "introspection_endpoint_auth_method": "client_secret_basic",
-         "bearer_only": true,
-         "introspection_interval": 120,
-         "set_userinfo_header": true,
-         "set_id_token_header": false,
-         "ssl_verify": false
-       },
+        "client_id": "'"$OIDC_CLIENT_ID"'",
+        "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+        "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+        "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+        "introspection_endpoint_auth_method": "client_secret_basic",
+        "introspection_interval": 600,
+        "bearer_only": true,
+        "set_userinfo_header": true,
+        "ssl_verify": false,
+        "scope": "openid profile email"
+      },
       "limit-req": {
-        "rate": 300,
-        "burst": 300,
+        "rate": 10,
+        "burst": 20,
         "rejected_code": 429,
         "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
         "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
     }
-  }'
+  }')
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "uri": "/issue-manager/*",
-    "id": "issue-manager-api",
-    "name": "issue-manager-api",
-    "upstream_id": "issue-manager",
-    "plugins": {
-      "openid-connect": {
-         "client_id": "'"$OIDC_CLIENT_ID"'",
-         "client_secret": "'"$OIDC_CLIENT_SECRET"'",
-         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
-         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
-         "introspection_endpoint_auth_method": "client_secret_basic",
-         "bearer_only": true,
-         "introspection_interval": 120,
-         "set_userinfo_header": true,
-         "set_id_token_header": false,
-         "ssl_verify": false
-       },
-      "limit-req": {
-        "rate": 300,
-        "burst": 300,
-        "rejected_code": 429,
-        "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
-      },
-      "limit-count": {
-        "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
-        "policy": "local",
-        "rejected_code": 429,
-        "show_limit_quota_header": true,
-        "time_window": 60
-      },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
-      }
-    }
-  }'
-check_module_status "Code Review"
+
+check_http_status "Code Review - Manager" "$RESPONSE"
 
 # ****
-# Code Completion V2 Configuration
-echo "正在配置 Code Completion V2 模块..."
+# Code Completion Configuration
+echo "正在配置 Code Completion 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
     "id": "code-completion",
     "nodes": {
@@ -352,7 +424,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "code-completion",
     "name": "code-completion",
     "uris": ["/code-completion/api/v1/completions"],
@@ -373,33 +445,27 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "burst": 10,
         "rejected_code": 503,
         "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
         "count": 240,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
-      },
-      "file-logger": {
-        "include_req_body": false,
-        "include_resp_body": false,
-        "path": "logs/access.log"
-      },
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
+      }
     }
-  }'
-check_module_status "Code Completion V2"
+  }')
+check_http_status "Code Completion" "$RESPONSE"
 
 # ****
 # Credit Manager Configuration
@@ -412,96 +478,40 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
 }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "credit-manager",
     "name": "credit-manager-routes",
     "uris": ["/credit/manager*"],
     "upstream_id": "credit-manager",
     "plugins": {
       "limit-req": {
-        "rate": 300,
-        "burst": 300,
+        "rate": 10,
+        "burst": 30,
         "rejected_code": 429,
         "key_type": "var_combination",
-        "key": "$remote_addr $http_x_forwarded_for"
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
-        "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
-        "policy": "local",
-        "rejected_code": 429,
-        "show_limit_quota_header": true,
-        "time_window": 60
-      },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
-      }
-    }
-}'
-check_module_status "Credit Manager"
-
-
-# ****
-# Issue Configuration
-# Submit issue reports, page resources are hosted on the portal service, API '/api/feedbacks/issue' is implemented by chatgpt.
-echo "正在配置 Issue 模块..."
-
-# Define upstream for login-related page resources
-curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
-    "id": "portal",
-    "nodes": {
-        "portal:80": 1
-    },
-    "type": "roundrobin"
-}'
-check_module_status "Issue"
-
-# ****
-# OIDC Auth Configuration
-echo "正在配置 OIDC Auth 模块..."
-curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
-    "id": "oidc-auth",
-    "nodes": {
-      "oidc-auth:8080": 1
-    },
-    "type": "roundrobin"
-  }'
-
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-  "id": "oidc-auth",
-  "name": "oidc-auth-routes",
-  "uris": [
-    "/oidc-auth/api/v1/plugin*",
-    "/oidc-auth/api/v1/manager*"
-  ],
-  "plugins": {
-    "limit-count": {
         "count": 60,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
-  }
-  "upstream_id": "oidc-auth"
-}'
-check_module_status "OIDC Auth"
+      
+    }
+}')
+check_http_status "Credit Manager" "$RESPONSE"
+
 
 # ****
 # Quota Manager Configuration
@@ -514,43 +524,29 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "quota-manager",
     "name": "quota-manager",
     "uris": ["/quota-manager/api/v1/quota*"],
     "upstream_id": "quota-manager",
     "plugins": {
-      "file-logger": {
-        "include_req_body": true,
-        "include_resp_body": true,
-        "path": "logs/access.log"
-      },
       "limit-count": {
         "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
-      },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-req": {
-        "allow_degradation": false,
-        "burst": 300,
-        "key": "$remote_addr $http_x_forwarded_for",
+        "rate": 10,
+        "burst": 30,
+        "rejected_code": 429,
         "key_type": "var_combination",
-        "nodelay": false,
-        "policy": "local",
-        "rate": 300,
-        "rejected_code": 429
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "openid-connect": {
         "client_id": "'"$OIDC_CLIENT_ID"'",
@@ -561,10 +557,77 @@ curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d
         "introspection_interval": 120,
         "bearer_only": true,
         "scope": "openid profile email"
+      },
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
     }
+  }')
+check_http_status "Quota Manager" "$RESPONSE"
+
+# ***
+# CodeBase
+echo "正在配置 CodeBase Embedder 模块..."
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
+    "id": "codebase-embedder",
+    "nodes": {
+      "codebase-embedder:8888": 1
+    },
+    "type": "roundrobin"
   }'
-check_module_status "Quota Manager"
+
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+  "id": "Codebase-embedder",
+  "uris": [
+    "/codebase-embedder/*"
+  ],
+  "name": "codebase-embedder",
+  "plugins": {
+    "openid-connect": { 
+      "client_id": "'"$OIDC_CLIENT_ID"'",
+      "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+      "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+      "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+      "introspection_endpoint_auth_method": "client_secret_basic",
+      "introspection_interval": 60,
+      "bearer_only": true,
+      "scope": "openid profile email",
+      "set_access_token_header": true,
+      "set_id_token_header": true,
+      "set_userinfo_header": true,
+      "ssl_verify": false
+    },
+    "limit-count": {
+      "count": 120,
+      "key": "$http_zgsm_client_id$http_authorization",
+      "key_type": "var_combination",
+      "policy": "local",
+      "rejected_code": 429,
+      "show_limit_quota_header": true,
+      "time_window": 60,
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "limit-req": {
+      "rate": 10,
+      "burst": 30,
+      "rejected_code": 429,
+      "key_type": "var_combination",
+      "key": "$http_zgsm_client_id$http_authorization",
+      "allow_degradation": '$Allow_DEGRADATION'
+    },
+    "request-id": {
+      "header_name": "X-Request-Id",
+      "include_in_response": true,
+      "algorithm": "uuid"
+    }
+  }
+}')
+
+check_http_status "Codebase-embedder" "$RESPONSE"
+
+
 
 # ****
 # PushGateway Configuration
@@ -577,40 +640,32 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
     "type": "roundrobin"
   }'
 
-curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "id": "pushgateway",
     "uri": "/pushgateway/api/v1/*",
     "name": "pushgateway",
     "upstream_id": "pushgateway",
     "plugins": {
-        "proxy-rewrite": {
-            "regex_uri": ["^/pushgateway/api/v1/(.*)", "/$1"]
-        },
-        "limit-count": {
-        "count": 120,
-        "key": "$remote_addr",
-        "key_type": "var",
+      "proxy-rewrite": {
+          "regex_uri": ["^/pushgateway/api/v1/(.*)", "/$1"]
+      },
+      "limit-count": {
+        "count": 30,
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
         "show_limit_quota_header": true,
-        "time_window": 60
-      },
-      "real-ip": {
-        "header": "X-Forwarded-For",
-        "recursive": true,
-        "source": "header",
-        "trusted_addresses": [
-          "'$TRUSTED_ADDRESSES'"
-        ]
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-req": {
-        "allow_degradation": false,
-        "burst": 300,
-        "key": "$remote_addr $http_x_forwarded_for",
+        "rate": 10,
+        "burst": 30,
+        "rejected_code": 429,
         "key_type": "var_combination",
-        "nodelay": false,
-        "policy": "local",
-        "rate": 300,
-        "rejected_code": 429
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
       },
       "openid-connect": {
         "client_id": "'"$OIDC_CLIENT_ID"'",
@@ -621,10 +676,57 @@ curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d 
         "introspection_interval": 120,
         "bearer_only": true,
         "scope": "openid profile email"
+      },
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
       }
     }
+  }')
+check_http_status "PushGateway" "$RESPONSE"
+
+# ****
+# Tunnel Manager Configuration
+echo "正在配置 Tunnel Manager 模块..."
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
+    "id": "tunnel-manager",
+    "nodes": {
+      "tunnel-manager:8080": 1
+    },
+    "type": "roundrobin"
   }'
-check_module_status "PushGateway"
+
+RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "uris": ["/tunnel-manager/*"],
+    "id": "tunnel-manager",
+    "upstream_id": "tunnel-manager",
+    "plugins": {
+      "file-logger": {
+        "path": "logs/access.log",
+        "include_req_body": true,
+        "include_resp_body": true
+      },
+      "openid-connect": {
+        "client_id": "'"$OIDC_CLIENT_ID"'",
+        "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+        "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+        "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+        "introspection_endpoint_auth_method": "client_secret_basic",
+        "introspection_interval": 60,
+        "bearer_only": true,
+        "set_userinfo_header": true,
+        "ssl_verify": false,
+        "scope": "openid profile email"
+      },
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
+      }
+    }
+  }')
+check_http_status "Tunnel Manager" "$RESPONSE"
 
 # ****
 # 执行结果统计
@@ -632,14 +734,4 @@ echo ""
 echo "=========================================="
 echo "         APISIX 路由配置执行结果统计"
 echo "=========================================="
-echo "成功配置的模块数量: $SUCCESS_MODULES"
-echo "失败配置的模块数量: $FAILED_MODULES"
-echo "=========================================="
-
-if [ $FAILED_MODULES -eq 0 ]; then
-    echo "🎉 所有模块配置成功！"
-    exit 0
-else
-    echo "⚠️  有 $FAILED_MODULES 个模块配置失败，请检查上述错误信息"
-    exit 1
-fi
+summary
