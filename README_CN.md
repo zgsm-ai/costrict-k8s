@@ -34,6 +34,7 @@
 ├─frontend
 │  └─credit-manager
 ├─portal
+│  ├─costrict-ssh-manager
 │  └─portal
 ├─statistics
 │  └─pushgateway
@@ -55,7 +56,7 @@ helm values 文件都在values/目录下
 ├─codebase-server       # codebase相关的服务，包含querier embedding
 ├─data-services         # 数据服务,mysql, redis, 向量数据库等
 ├─frontend              # 前端页面
-├─portal                # 静态资源
+├─portal                # 静态资源,以及静态资源管理容器
 ├─statistics            # 统计相关，主要是指标数据采集 
 └─tunnel                # 隧道相关
 ```

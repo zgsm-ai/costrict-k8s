@@ -1,0 +1,80 @@
+# values.yaml
+
+# 应用配置
+appName: costrict-manager
+containerName: costrict-manager
+containerPort: 22
+
+# 副本数
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: zgsm/ubuntu-ssh-tools
+  pullPolicy: IfNotPresent
+  tag: "0.0.1"
+
+# 资源限制
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# SSH 配置
+ssh:
+  # root 密码，如果为空则使用默认密码或通过 secret 设置
+  rootPassword: ""
+  # 是否启用 authorized_keys
+  authorizedKeys: ""
+  # 是否使用自定义 host keys
+  useCustomHostKeys: false
+
+# Secret 配置
+secret:
+  # 是否创建 secret
+  enabled: true
+  # Secret 名称
+  name: costrict-ssh-manager-secret
+  # Secret 中的数据
+  data:
+    # root 密码，如果为空则使用 values.yaml 中的密码
+    password: ""
+    # SSH 公钥，如果为空则使用 values.yaml 中的公钥
+    authorizedKeys: ""
+
+# Service 配置
+service:
+  name: costrict-ssh-manager
+  type: NodePort
+  port: 22
+  targetPort: 22
+  nodePort: 31022
+
+# ServiceMonitor 配置
+serviceMonitor:
+  enabled: false
+  name: costrict-manager-costrict
+  namespace: monitoring
+  path: /metrics
+  interval: 15s
+  labels: {}
+  # 可选的 metricRelabelings 配置
+  metricRelabelings: []
+  # 可选的 relabelings 配置
+  relabelings: []
+
+# PVC 配置列表
+pvcs:
+  # 示例配置：
+  # - name: existing-pvc-name
+  #   mountPath: "/mnt/data1"
+  #   subPath: ""  # 可选
+  #   readOnly: true  # 可选，默认为 false
+  # - name: another-pvc
+  #   mountPath: "/mnt/data2"
+  #   subPath: "subfolder"  # 可选
+  #   readOnly: false  # 可选，默认为 false
+  []

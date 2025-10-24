@@ -18,7 +18,7 @@
 
 ### 环境
 
-准备以下环境: `k8s > v1.27.0`、 `helm >= 3`、`python >=3.6`(安装pyyaml：pip3 install PyYAML) ,如果你的环境中没有 python和helm环境，可以使用这个镜像运行容器，在这个容器中运行kubectl、python、helm等命令,也可以提前准备好[镜像](./docker_file/README.md)
+准备以下环境: `k8s > v1.27.0`、 `helm >= 3`、`python >=3.6`(安装pyyaml：pip3 install PyYAML) ,如果你的环境中没有 python和helm环境，可以使用这个镜像运行容器，在这个容器中运行kubectl、python、helm等命令,也可以提前准备好[镜像](./docker_file/costrict-helm-tool/README.md)
 
 准备可用的StorageClass，比如通过nfs创建的sc。
 
@@ -154,11 +154,10 @@ chat-rag:
  
 1. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml的配置，因为这个配置需要访问cotun,默认命名空间是：costrict-cotun
 
-### 修改自定义设置
-
-1. `values/auth/oidc-values.yaml` 修改 clientID clientSecret,登录认证时需要
-2. `values/ai-gateway/quota-manager-values.yaml` 修改signing_key, 用于签名配额
-3. `values/auth/apisix-values.yaml` 修改相关的密钥和密码,以及需要暴露的apisix-gateway端口，这个端口将用于访问costrict的入口。
+2. `values/auth/oidc-values.yaml` 修改 clientID clientSecret,登录认证时需要
+3. `values/ai-gateway/quota-manager-values.yaml` 修改signing_key, 用于签名配额
+4. `values/auth/apisix-values.yaml` 修改相关的密钥和密码,以及需要暴露的apisix-gateway端口，这个端口将用于访问costrict的入口。
+5. `values/portal/costrict-ssh-manager-values.yaml` 修改管理容器的密码，管理容器用于查看chat-rag日志，更新portal内容等。
 
 ## 检查配置完整度
 

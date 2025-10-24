@@ -120,6 +120,11 @@ portal:
     values: portal-values.yaml
     storageClass:
       "persistence.storageClassName": "nfs-storage"
+  costrict-ssh-manager:
+    chart: costrict-ssh-manager-0.1.0.tgz
+    values: costrict-ssh-manager-values.yaml
+
+
 statistics:
   pushgateway:
     chart: pushgateway-0.1.0.tgz

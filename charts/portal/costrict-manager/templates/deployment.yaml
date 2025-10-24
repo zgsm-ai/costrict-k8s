@@ -1,0 +1,67 @@
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.containerName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+              name: ssh
+          volumeMounts:
+            - name: ssh-secrets
+              mountPath: /etc/secrets
+              readOnly: true
+            {{- range .Values.pvcs }}
+            - name: {{ .name }}-volume
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: ssh-secrets
+          secret:
+            secretName: {{ .Values.secret.name }}
+            items:
+              {{- if .Values.secret.data.password }}
+              - key: password
+                path: password
+              {{- end }}
+              {{- if .Values.secret.data.authorizedKeys }}
+              - key: authorized_keys
+                path: authorized_keys
+              {{- end }}
+        {{- range .Values.pvcs }}
+        - name: {{ .name }}-volume
+          persistentVolumeClaim:
+            claimName: {{ .name }}
+        {{- end }}

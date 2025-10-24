@@ -7,7 +7,7 @@
 ```shell
 wget https://get.helm.sh/helm-v3.18.6-linux-amd64.tar.gz
 tar -zxf helm-v3.18.6-linux-amd64.tar.gz
-docker build -t costrict-helm:v1 -f helm-Dockerfile .
+docker build -t costrict-helm:v1 -f Dockerfile .
 ```
 
 运行
