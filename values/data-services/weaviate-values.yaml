@@ -78,8 +78,8 @@ initContainers:
 # 健康检查（可选调整）
 # ===================================
 readinessProbe:
-  initialDelaySeconds: 3
-  periodSeconds: 10
+  initialDelaySeconds: 30
+  periodSeconds: 20
   failureThreshold: 3
 
 livenessProbe:
