@@ -37,6 +37,8 @@ RUN apt-get update && \
         gzip \
         bash-completion \
         vim \
+        git \
+        git-lfs \
     && rm -rf /var/lib/apt/lists/*
 
 
