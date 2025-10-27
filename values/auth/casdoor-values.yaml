@@ -9,6 +9,27 @@ database:
   user: costrict
 
 
+config: |
+  appname = casdoor
+  httpport = {{ .Values.service.port }}
+  runmode = dev
+  SessionOn = true
+  copyrequestbody = true
+  driverName = {{ .Values.database.driver }}
+  dataSourceName = {{ include "casdoor.dataSourceName" . }}
+  dbName = {{ include "casdoor.dbName" . }}
+  redisEndpoint =
+  defaultStorageProvider =
+  isCloudIntranet = false
+  authState = "casdoor"
+  socks5Proxy = ""
+  verificationCodeTimeout = 10
+  initScore = 0
+  logPostOnly = true
+  origin =
+  enableGzip = true
+  ldapServerPort = 10389
+
 image:
   name: casdoor
   pullPolicy: IfNotPresent
