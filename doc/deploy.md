@@ -173,7 +173,7 @@ python3 helm_deploy.py check
 
 3 使用以下命令安装其他全部服务
 ```
-python3 helm_deploy.py install
+python3 helm_deploy.py install --all
 ```
 
 ### 修改路由

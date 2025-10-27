@@ -446,8 +446,15 @@ def main():
                        help="chart基础目录路径 (默认: ./out)")
     parser.add_argument("--output-dir", default="./output",
                        help="template命令输出目录 (默认: ./output)")
+    parser.add_argument("--all", action="store_true",
+                       help="处理所有release，允许release参数为空")
     
     args = parser.parse_args()
+    
+    # 验证release参数
+    if args.command in["upgrade","install"] and not args.all and not args.release:
+        print("错误: 必须指定release名称，或使用--all参数处理所有release")
+        sys.exit(1)
     
     # 检查配置文件是否存在
     if not os.path.exists(args.config):
