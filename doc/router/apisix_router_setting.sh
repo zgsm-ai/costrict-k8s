@@ -573,16 +573,17 @@ echo "正在配置 CodeBase Embedder 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
     "id": "codebase-embedder",
     "nodes": {
-      "codebase-embedder:8888": 1
+      "codebase-embedder-svc:8888": 1
     },
     "type": "roundrobin"
   }'
 
 RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
-  "id": "Codebase-embedder",
+  "id": "codebase-embedder",
   "uris": [
     "/codebase-embedder/*"
   ],
+  "upstream_id": "codebase-embedder",
   "name": "codebase-embedder",
   "plugins": {
     "openid-connect": { 
@@ -635,7 +636,7 @@ echo "正在配置 PushGateway 模块..."
 curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "pushgateway",
     "nodes": {
-      "pushgateway.shenma.svc.cluster.local:9091": 1
+      "pushgateway:9091": 1
     },
     "type": "roundrobin"
   }'
