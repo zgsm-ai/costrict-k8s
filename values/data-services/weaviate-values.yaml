@@ -95,3 +95,32 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: false
+
+# 由于向量数据库极度消耗资源，建议使用独立节点
+# 硬偏好：用于选择指定节点
+# nodeSelector:
+#   disktype: ssd
+# 软偏好：给节点打分，分数高的优先
+# affinity:
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values: [ "worker2","worker1"]
+#     # 软偏好：给节点打分，分数高的优先
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#     - weight: 100            # 最高优先级
+#       preference:
+#         matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values: ["worker2"]
+#     - weight: 10
+#       preference:
+#         matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values: ["worker1"]
+
