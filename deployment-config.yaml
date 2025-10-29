@@ -131,3 +131,18 @@ statistics:
     values: pushgateway-values.yaml
     storageClass:
       "persistence.storageClassName": "nfs-storage"
+  # 根据实际情况选择是否要部署loki prometheus
+  # loki:
+  #   namespace: loki
+  #   chart: loki-stack-2.10.2.tgz
+  #   values: loki-stack-values.yaml
+  #   storageClass: 
+  #     "loki.persistence.storageClassName": "nfs-storage"
+  # # promethus + granfana
+  # prometheus:
+  #   namespace: monitoring
+  #   chart: kube-prometheus-stack-72.9.1.tgz
+  #   values: kube-prometheus-stack-values.yaml
+  #   storageClass:
+  #     "global.storageClass": "nfs-storage"
+  #     "grafana.persistence.storageClassName": "nfs-storage"

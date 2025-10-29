@@ -106,5 +106,6 @@ backup:
 metrics:
   enabled: true
   serviceMonitor:
+    namespace: monitoring
     enabled: false
 

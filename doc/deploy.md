@@ -12,7 +12,7 @@
 2. k8s
 3. helm
 
-注意：此部署只部署服务，相关配置还需要用户自行配置，相关的运维工具，如loki,grafana都包含，**并且不部署Prometheus以及不同服务的 ServiceMonitor**
+注意：默认不部署prometheus+grafana+loki,如需要，请自行修改deploymetn-config.yaml。
 
 ## 前期准备
 
@@ -69,7 +69,7 @@ nginx:1.27.1
 
 ```
 
-<font color='red'>其他Costrict 的业务镜像，可以参考：[Docker compose方案](https://github.com/zgsm-ai/zgsm-backend-deploy/) 中的描述,或者联系我们。 </font>
+<font color='red'>其他Costrict 的业务镜像，可以参考：values下的yaml文件，或者 [Docker compose方案](https://github.com/zgsm-ai/zgsm-backend-deploy/) 中的描述,或者联系我们。 </font>
 
 ### 创建k8s存储类(StorageClass)
 

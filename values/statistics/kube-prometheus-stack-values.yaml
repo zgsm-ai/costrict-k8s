@@ -1,0 +1,131 @@
+# 全局开关
+global:
+  rbac:
+    create: true
+  # imageRegistry: "registry.cn-hangzhou.aliyuncs.com"   # 国内镜像加速
+  storageClass: "nfs-storage"                         # 按需改为你集群的存储类
+
+# Operator 自身配置
+prometheusOperator:
+  #image:
+    # repository: google_containers/prometheus-operator
+    # tag: v0.79.2
+  #prometheusConfigReloader:
+    # image:
+    #   repository: google_containers/prometheus-config-reloader
+    #   tag: v0.79.2
+  admissionWebhooks:
+    patch:
+      image:
+        # 替换能够拉取的镜像
+        registry: "docker.io" # 可替换为：docker.m.daocloud.io
+        repository: kubesphere/kube-webhook-certgen
+        tag: v1.5.2 # chart 内指定的是v1.5.3
+
+# AlertManager 配置
+alertmanager:
+  enabled: false
+  ingress:
+    enabled: false
+    # ingressClassName: prometheus
+    # hosts:
+    #   - alertmanager.demo.local
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'webhook'
+    receivers: []
+  alertmanagerSpec:
+    replicas: 1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "{{ .Values.global.storageClass }}"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# Prometheus 配置
+prometheus:
+  enabled: true
+  ingress:
+    enabled: false
+  prometheusSpec:
+    replicas: 1
+    retention: 7d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "{{ .Values.global.storageClass }}"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 200Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+# Grafana 配置
+grafana:
+  enabled: true
+  adminPassword: "Prometheus@123"
+  # image:
+  #   repository: grafana/grafana
+  #   tag: "12.2"
+  ingress:
+    enabled: false
+  persistence:
+    enabled: true
+    storageClassName: "nfs-storage"
+    size: 20Gi
+  service:
+    type: ClusterIP
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+    datasources:
+      enabled: true
+      label: grafana_datasource
+
+# kube-state-metrics
+kubeStateMetrics:
+  enabled: false
+
+
+# node-exporter
+nodeExporter:
+  enabled: false
+  service:
+    port: 9100
+    targetPort: 9100
+  tolerations:
+    - operator: Exists   # 部署到所有节点，包括 master
+
+# 默认关闭不用的组件（可按需开启）
+kubeApiServer:
+  enabled: true
+kubeControllerManager:
+  enabled: true
+coreDns:
+  enabled: true
+kubeEtcd:
+  enabled: false  
+kubeScheduler:
+  enabled: true
+kubeProxy:
+  enabled: true
