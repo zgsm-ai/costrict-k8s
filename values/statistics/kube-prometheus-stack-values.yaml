@@ -103,8 +103,13 @@ grafana:
       label: grafana_datasource
 
 # kube-state-metrics
-kubeStateMetrics:
-  enabled: false
+kube-state-metrics:
+  enabled: true
+  image:
+    registry: docker.io # docker.m.daocloud.io
+    repository: kubesphere/kube-state-metrics
+    # If unset use v + .Charts.appVersion
+    tag: "v2.15.0"
 
 
 # node-exporter
