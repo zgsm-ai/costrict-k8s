@@ -71,7 +71,7 @@ issueManager:
   image:
     repository: zgsm/issue-manager
     pullPolicy: IfNotPresent
-    tag: "1.1.6"
+    tag: "1.1.8"
   service:
     name: issue-manager
     type: ClusterIP
@@ -95,7 +95,7 @@ reviewChecker:
   image:
     repository: zgsm/review-checker
     pullPolicy: IfNotPresent
-    tag: "1.1.6"
+    tag: "1.1.7"
   service:
     name: review-checker
     type: ClusterIP
