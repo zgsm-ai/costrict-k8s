@@ -51,6 +51,14 @@ higress-core:
     hub: zgsm
     image: "higress-gateway"
     tag: "2.1.6"
+    replicas: 2
+    resources:
+      requests:
+        cpu: 2000m
+        memory: 2048Mi
+      limits:
+        cpu: 2000m
+        memory: 4096Mi
   controller:
     hub: zgsm
     image: "higress-higress"
