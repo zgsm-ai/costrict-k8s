@@ -99,7 +99,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
   ],
   "plugins": {
     "limit-count": {
-        "count": 60,
+        "count": 1200,
         "key": "$http_zgsm_client_id$http_authorization",
         "key_type": "var_combination",
         "policy": "local",
@@ -109,8 +109,8 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
         "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-req": {
-        "rate": 10,
-        "burst": 30,
+        "rate": 100,
+        "burst": 300,
         "rejected_code": 429,
         "key_type": "var_combination",
         "key": "$http_zgsm_client_id$http_authorization",
@@ -167,8 +167,8 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
       "allow_degradation": '$Allow_DEGRADATION'
     },
     "limit-req": {
-      "rate": 60,
-      "burst": 300,
+      "rate": 600,
+      "burst": 3000,
       "rejected_code": 429,
       "key_type": "var_combination",
       "key": "$http_zgsm_client_id$http_authorization",
@@ -205,7 +205,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
   "status": 1,
   "plugins": {
     "limit-count": {
-      "count": 60,
+      "count": 600,
       "key_type": "var_combination",
       "policy": "local",
       "rejected_code": 429,
@@ -214,8 +214,8 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
       "allow_degradation": '$Allow_DEGRADATION'
     },
     "limit-req": {
-      "rate": 10,
-      "burst": 20,
+      "rate": 100,
+      "burst": 200,
       "rejected_code": 429,
       "key_type": "var_combination",
       "key": "$http_zgsm_client_id$http_authorization",
@@ -304,15 +304,15 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
     "upstream_id": "costrict-apps",
     "plugins": {
       "limit-req": {
-        "rate": 10,
-        "burst": 20,
+        "rate": 100,
+        "burst": 200,
         "rejected_code": 429,
         "key_type": "var_combination",
         "key": "$http_zgsm_client_id$http_authorization",
         "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
-        "count": 180,
+        "count": 1800,
         "key": "$http_zgsm_client_id$http_authorization",
         "key_type": "var_combination",
         "policy": "local",
@@ -393,7 +393,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
         "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
-        "count": 120,
+        "count": 360,
         "key": "$http_zgsm_client_id$http_authorization",
         "key_type": "var_combination",
         "policy": "local",
@@ -489,12 +489,12 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
         "burst": 30,
         "rejected_code": 429,
         "key_type": "var_combination",
-        "key": "$http_zgsm_client_id$http_authorization",
+        "key": "$http_zgsm_client_id$http_authorization$cookie_casdoor_session_id",
         "allow_degradation": '$Allow_DEGRADATION'
       },
       "limit-count": {
-        "count": 60,
-        "key": "$http_zgsm_client_id$http_authorization",
+        "count": 20,
+        "key": "$http_zgsm_client_id$http_authorization$cookie_casdoor_session_id",
         "key_type": "var_combination",
         "policy": "local",
         "rejected_code": 429,
@@ -601,7 +601,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
       "ssl_verify": false
     },
     "limit-count": {
-      "count": 120,
+      "count": 360,
       "key": "$http_zgsm_client_id$http_authorization",
       "key_type": "var_combination",
       "policy": "local",
@@ -651,7 +651,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
           "regex_uri": ["^/pushgateway/api/v1/(.*)", "/$1"]
       },
       "limit-count": {
-        "count": 30,
+        "count": 60,
         "key": "$http_zgsm_client_id$http_authorization",
         "key_type": "var_combination",
         "policy": "local",
