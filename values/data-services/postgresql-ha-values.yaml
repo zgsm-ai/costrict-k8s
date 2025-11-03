@@ -32,9 +32,9 @@ postgresql:
     certFilename: ""
     certKeyFilename: ""
   # 连接设置
-  # maxConnections: ""
-  # postgresConnectionLimit: ""
-  # dbUserConnectionLimit: ""
+  maxConnections: "200"  # 增加最大连接数,不小于 pgpool配置中 numInitChildren * maxPool 实例数 
+  postgresConnectionLimit: "128"  # postgres 用户的连接限制
+  dbUserConnectionLimit: "128"  # 普通数据库用户的连接限制
   # statementTimeout: ""
   audit:
     logTimezone: "Asia/Shanghai"
@@ -65,30 +65,28 @@ pgpool:
   useLoadBalancing: true
   logConnections: false
   logPerNodeStatement: false
-  maxPool: ""
-  childMaxConnections: ""
-  childLifeTime: ""
-  clientIdleLimit: ""
-  connectionLifeTime: ""
+  # max_pool*num_init_children <= (max_connections - superuser_reserved_connections) max_connections指的是业务最大连接数
+  numInitChildren: 36 # 初始化连接数
+  maxPool: 2 # 每个子进程最多缓存多少个到 PostgreSQL 的连接, 乘以numInitChildren就是真实连接数
+  reservedConnections: 2 # 保留连接数
+  # 生命周期管理:
+  # 限制每个子进程在其生命周期内最多可以处理的客户端连接数，达到这个数量，子进程将会退出，并启动新的子进程。
+  childMaxConnections: 1000 
+  childLifeTime: 1200 # 空闲多久后终止子进程
+  # clientIdleLimit: 1800  # 客户端空闲多久后断开,由客户端连接池管理。
+  connectionLifeTime: 600 # 后端数据库连接的最大存活时间
+  # 资源限制
   resources:
     requests:
-      cpu: 250m
+      cpu: "2"
       memory: 256Mi
     limits:
-      cpu: "4"
-      memory: 8Gi
+      cpu: "6"
+      memory: 12Gi
   customUsers:
     # 注意，与后续的初始化脚本中的用户名保持一致
     usernames: "costrict"
     passwords: "costrict"
-
-metrics:
-  enabled: true # 根据情况确定是否启用 Prometheus 监控
-  serviceMonitor:
-    enabled: true
-    namespace: monitoring
-
-
 
 backup:
   enabled: true
@@ -107,5 +105,5 @@ metrics:
   enabled: true
   serviceMonitor:
     namespace: monitoring
-    enabled: false
+    enabled: true
 
