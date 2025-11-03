@@ -12,7 +12,7 @@ database:
 config: |
   appname = casdoor
   httpport = {{ .Values.service.port }}
-  runmode = dev
+  runmode = prod
   SessionOn = true
   copyrequestbody = true
   driverName = {{ .Values.database.driver }}
