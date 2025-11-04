@@ -299,10 +299,13 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
   
 RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "costrict-apps",
-    "uri": "/costrict/*",
+    "uris": ["/", "/index", "/index.html", "/costrict/*"],
     "name": "costrict-apps",
     "upstream_id": "costrict-apps",
     "plugins": {
+      "proxy-rewrite": {
+        "regex_uri": ["^/$", "/index.html", "^/index$", "/index.html", "^/index.html$", "/index.html"]
+      },
       "limit-req": {
         "rate": 100,
         "burst": 200,
@@ -349,7 +352,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
 RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "issue-resources",
     "name": "issue-resources",
-    "uris": ["/issue/*"],
+    "uris": ["/issue/*","issue-manager"],
     "upstream_id": "issue-manager"
   }')
 
@@ -702,19 +705,15 @@ RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE
     "uris": ["/tunnel-manager/*"],
     "id": "tunnel-manager",
     "upstream_id": "tunnel-manager",
+    "name": "tunnel-manager",
     "plugins": {
-      "file-logger": {
-        "path": "logs/access.log",
-        "include_req_body": true,
-        "include_resp_body": true
-      },
       "openid-connect": {
         "client_id": "'"$OIDC_CLIENT_ID"'",
         "client_secret": "'"$OIDC_CLIENT_SECRET"'",
         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 60,
+        "introspection_interval": 300,
         "bearer_only": true,
         "set_userinfo_header": true,
         "ssl_verify": false,
@@ -728,6 +727,61 @@ RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE
     }
   }')
 check_http_status "Tunnel Manager" "$RESPONSE"
+
+
+# ****
+# Cotun Configuration
+echo "正在配置 Coutn 模块..."
+curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT  -d '{
+    "id": "cotun",
+    "nodes": {
+      "cotun:8080": 1
+    },
+    "type": "roundrobin"
+  }'
+
+RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
+    "uris": ["/ws", "/ws/*"],
+    "id": "cotun",
+    "upstream_id": "cotun",
+    "name": "cotun",
+    "plugins": {
+      "request-id": {
+        "header_name": "X-Request-Id",
+        "include_in_response": true,
+        "algorithm": "uuid"
+      },
+      "limit-count": {
+        "count": 60,
+        "key": "$http_zgsm_client_id$http_authorization",
+        "key_type": "var_combination",
+        "policy": "local",
+        "rejected_code": 429,
+        "show_limit_quota_header": true,
+        "time_window": 60,
+        "allow_degradation": '$Allow_DEGRADATION'
+      },
+      "limit-req": {
+        "rate": 5,
+        "burst": 10,
+        "rejected_code": 429,
+        "key_type": "var_combination",
+        "key": "$http_zgsm_client_id$http_authorization",
+        "allow_degradation": '$Allow_DEGRADATION'
+      },
+      "openid-connect": {
+        "client_id": "'"$OIDC_CLIENT_ID"'",
+        "client_secret": "'"$OIDC_CLIENT_SECRET"'",
+        "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
+        "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
+        "introspection_endpoint_auth_method": "client_secret_basic",
+        "introspection_interval": 120,
+        "bearer_only": true,
+        "scope": "openid profile email"
+      }
+    }
+  }')
+check_http_status "Cotun" "$RESPONSE"
 
 # ****
 # 执行结果统计
