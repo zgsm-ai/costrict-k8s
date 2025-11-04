@@ -227,6 +227,15 @@ portal是一个使用nginx提供反向代理代理静态文件的服务，里面
 访问 apisix-gateway 这个k8s service的端口即可，costrict插件中设置的baseUrl也是访问这个端口即可。
 ```
 
+# 安全配置:
+
+强烈建议修改以下密码，以增加系统安全性 (因为这些将直接对外暴露)
+
+```
+1. casdoor admin 默认密码
+2. grafana 密码
+```
+
 # 卸载
 
 不提供卸载脚本，请手动卸载，<font color='red'>卸载十分危险，请谨慎执行</font>
