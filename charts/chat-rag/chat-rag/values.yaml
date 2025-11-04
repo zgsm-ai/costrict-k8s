@@ -8,6 +8,14 @@ containerPort: 8888
 # 副本数
 replicaCount: 2
 
+# 滚动更新配置
+rollingUpdate:
+  maxUnavailable: 1   # 滚动更新时最多允许的不可用容器数
+  maxSurge: 1         # 滚动更新时最多允许的额外容器数
+
+# 容器终止配置
+terminationGracePeriodSeconds: 150  # 容器终止宽限期（秒），2.5分钟
+
 # 镜像配置
 image:
   repository: zgsm/chat-rag

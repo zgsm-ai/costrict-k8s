@@ -82,7 +82,7 @@ prometheus:
 # Grafana 配置
 grafana:
   enabled: true
-  adminPassword: "Prometheus@123"
+  adminPassword: "123456"
   # image:
   #   repository: grafana/grafana
   #   tag: "12.2"
@@ -93,7 +93,8 @@ grafana:
     storageClassName: "nfs-storage"
     size: 20Gi
   service:
-    type: ClusterIP
+    type: NodePort
+    nodePort: 30030
   sidecar:
     dashboards:
       enabled: true

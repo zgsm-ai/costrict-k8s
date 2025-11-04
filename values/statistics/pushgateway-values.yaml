@@ -21,8 +21,8 @@ resources:
     cpu: 100m
     memory: 256Mi
   limits:
-    cpu: 250m
-    memory: 640Mi
+    cpu: "3"
+    memory: "4Gi"
 
 # 持久化存储配置
 persistence:
