@@ -5,18 +5,46 @@ global:
   # imageRegistry: "registry.cn-hangzhou.aliyuncs.com"   # 国内镜像加速
   storageClass: "nfs-storage"                         # 按需改为你集群的存储类
 
+# ==================== 所有镜像设置 ====================
+# CRD 升级作业镜像配置
+# crds:
+#   upgradeJob:
+#     image:
+#       # busybox 镜像 - 用于 CRD 升级作业中的通用工具
+#       busybox:
+#         registry: docker.io
+#         repository: busybox
+#         tag: "latest"
+#         sha: ""
+#         pullPolicy: IfNotPresent
+#       # kubectl 镜像 - 用于 CRD 升级作业中执行 kubectl 命令
+#       kubectl:
+#         registry: registry.k8s.io
+#         repository: kubectl
+#         tag: ""  # 默认使用 Kubernetes 版本
+#         sha: ""
+#         pullPolicy: IfNotPresent
+
 # Operator 自身配置
 prometheusOperator:
+  # prometheus-operator 镜像 - 用于管理和监控 Prometheus 相关组件
   #image:
-    # repository: google_containers/prometheus-operator
-    # tag: v0.79.2
+    # registry: quay.io
+    # repository: prometheus-operator/prometheus-operator
+    # tag: ""  # 如果未设置，使用 Chart.yaml 中的 appVersion
+    # sha: ""
+    # pullPolicy: IfNotPresent
+  # prometheus-config-reloader 镜像 - 用于重新加载 Prometheus 配置
   #prometheusConfigReloader:
     # image:
-    #   repository: google_containers/prometheus-config-reloader
-    #   tag: v0.79.2
+    #   registry: quay.io
+    #   repository: prometheus-operator/prometheus-config-reloader
+    #   tag: ""  # 如果未设置，使用 Chart.yaml 中的 appVersion
+    #   sha: ""
   admissionWebhooks:
     patch:
       image:
+        # kube-webhook-certgen 镜像 - 用于生成 webhook 证书
         # 替换能够拉取的镜像
         registry: "docker.io" # 可替换为：docker.m.daocloud.io
         repository: kubesphere/kube-webhook-certgen
@@ -25,6 +53,12 @@ prometheusOperator:
 # AlertManager 配置
 alertmanager:
   enabled: false
+  # alertmanager 镜像 - 用于处理和发送告警
+  #image:
+    # registry: quay.io
+    # repository: prometheus/alertmanager
+    # tag: v0.28.1
+    # sha: ""
   ingress:
     enabled: false
     # ingressClassName: prometheus
@@ -56,6 +90,12 @@ prometheus:
   enabled: true
   ingress:
     enabled: false
+  # prometheus 镜像 - 用于收集和存储时间序列数据
+  #image:
+    # registry: quay.io
+    # repository: prometheus/prometheus
+    # tag: v3.4.1
+    # sha: ""
   prometheusSpec:
     replicas: 1
     retention: 7d
@@ -83,9 +123,35 @@ prometheus:
 grafana:
   enabled: true
   adminPassword: "123456"
-  # image:
-  #   repository: grafana/grafana
-  #   tag: "12.2"
+  # grafana 镜像 - 用于数据可视化和监控仪表板
+  #image:
+    # registry: docker.io
+    # repository: grafana/grafana
+    # tag: ""
+    # sha: ""
+    # pullPolicy: IfNotPresent
+  # grafana-image-renderer 镜像 - 用于渲染图像和 PDF
+  imageRenderer:
+    #image:
+      # registry: docker.io
+      # repository: grafana/grafana-image-renderer
+      # tag: latest
+      # sha: ""
+      # pullPolicy: Always
+  # download-dashboards 镜像 - 用于下载仪表板
+  #downloadDashboardsImage:
+    # registry: docker.io
+    # repository: curlimages/curl
+    # tag: 8.9.1
+    # sha: ""
+    # pullPolicy: IfNotPresent
+  # test-framework 镜像 - 用于测试框架
+  #testFramework:
+    #image:
+      # registry: docker.io
+      # repository: bats/bats
+      # tag: "v1.4.1"
+    # pullPolicy: IfNotPresent
   ingress:
     enabled: false
   persistence:
@@ -95,32 +161,86 @@ grafana:
   service:
     type: NodePort
     nodePort: 30030
+  # grafana-sidecar 镜像 - 用于自动发现和加载配置
   sidecar:
     dashboards:
       enabled: true
       label: grafana_dashboard
+      # grafana-k8s-sidecar 镜像 - 用于自动发现和加载仪表板
+      #image:
+        # registry: quay.io
+        # repository: kiwigrid/k8s-sidecar
+        # tag: 1.30.0
+        # sha: ""
+        # pullPolicy: IfNotPresent
     datasources:
       enabled: true
       label: grafana_datasource
+      # 修改Prometheus数据源查询超时时间为60秒
+      timeout: 300
+      # grafana-k8s-sidecar 镜像 - 用于自动发现和加载数据源
+      #image:
+        # registry: quay.io
+        # repository: kiwigrid/k8s-sidecar
+        # tag: 1.30.0
+        # sha: ""
+        # pullPolicy: IfNotPresent
 
 # kube-state-metrics
 kube-state-metrics:
   enabled: true
+  # kube-state-metrics 镜像 - 用于监听 Kubernetes API 并生成关于对象状态的指标
   image:
     registry: docker.io # docker.m.daocloud.io
     repository: kubesphere/kube-state-metrics
     # If unset use v + .Charts.appVersion
     tag: "v2.15.0"
-
+    # sha: ""
+    # pullPolicy: IfNotPresent
+  # kube-rbac-proxy 镜像 - 用于提供 RBAC 代理功能
+  #kubeRBACProxy:
+    # enabled: false
+    # image:
+      # registry: quay.io
+      # repository: brancz/kube-rbac-proxy
+      # tag: v0.19.1
+      # sha: ""
+      # pullPolicy: IfNotPresent
 
 # node-exporter
 nodeExporter:
   enabled: false
+  # node-exporter 镜像 - 用于收集节点硬件和操作系统指标
+  #image:
+    # registry: quay.io
+    # repository: prometheus/node-exporter
+    # tag: ""
+    # pullPolicy: IfNotPresent
+    # digest: ""
+  # kube-rbac-proxy 镜像 - 用于提供 RBAC 代理功能
+  #kubeRBACProxy:
+    # enabled: false
+    # image:
+      # registry: quay.io
+      # repository: brancz/kube-rbac-proxy
+      # tag: v0.19.1
+      # sha: ""
+      # pullPolicy: IfNotPresent
   service:
     port: 9100
     targetPort: 9100
   tolerations:
     - operator: Exists   # 部署到所有节点，包括 master
+
+# prometheus-windows-exporter
+# prometheusWindowsExporter:
+  # prometheus-windows-exporter 镜像 - 用于收集 Windows 节点的指标
+  # image:
+    # registry: ghcr.io
+    # repository: prometheus-community/windows-exporter
+    # tag: ""
+    # pullPolicy: IfNotPresent
+    # digest: ""
 
 # 默认关闭不用的组件（可按需开启）
 kubeApiServer:
@@ -135,3 +255,19 @@ kubeScheduler:
   enabled: true
 kubeProxy:
   enabled: true
+
+# thanos 镜像 - 用于 Thanos 组件，提供 Prometheus 的高可用性和长期存储能力
+# thanosImage:
+  # registry: quay.io
+  # repository: thanos/thanos
+  # tag: v0.38.0
+  # sha: ""
+
+# thanosRuler 镜像 - 用于 Thanos Ruler 组件，提供规则评估和告警功能
+# thanosRuler:
+  # thanosRulerSpec:
+    #image:
+      # registry: quay.io
+      # repository: thanos/thanos
+      # tag: v0.38.0
+      # sha: ""

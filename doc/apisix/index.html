@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎使用 CoStrict | Welcome to CoStrict</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .instruction {
+            background-color: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+        }
+        .lang-section {
+            margin: 20px 0;
+        }
+        .lang-title {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>欢迎使用 CoStrict | Welcome to CoStrict</h1>
+        
+        <div class="lang-section">
+            <div class="lang-title">中文 | Chinese</div>
+            <p>欢迎使用 CoStrict 平台！您已成功连接到我们的服务。</p>
+            
+            <div class="warning">
+                <strong>重要提示：</strong> 后台服务不支持直接访问。请将本服务器地址填入 VS Code 的 BaseUrl 设置中，以便正确使用 CoStrict 功能。
+            </div>
+            
+            <div class="instruction">
+                <strong>操作步骤：</strong>
+                <ol>
+                    <li>打开 VS Code</li>
+                    <li>进入 CoStrict 扩展设置</li>
+                    <li>在 BaseUrl 字段中输入当前服务器地址：<code id="server-url"></code></li>
+                    <li>保存设置并登录</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="lang-section">
+            <div class="lang-title">English | 英文</div>
+            <p>Welcome to the CoStrict platform! You have successfully connected to our service.</p>
+            
+            <div class="warning">
+                <strong>Important Notice:</strong> The backend service does not support direct access. Please enter this server address in the VS Code BaseUrl setting to properly use CoStrict features.
+            </div>
+            
+            <div class="instruction">
+                <strong>Instructions:</strong>
+                <ol>
+                    <li>Open VS Code</li>
+                    <li>Navigate to CoStrict extension settings</li>
+                    <li>Enter the current server address in the BaseUrl field: <code id="server-url-en"></code></li>
+                    <li>Save the settings and login</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="lang-section">
+            <div class="lang-title">技术支持 | Technical Support</div>
+            <p>
+                中文：如需帮助，请联系技术支持团队。<br>
+                English: For assistance, please contact our technical support team.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 自动获取当前服务器地址
+        document.getElementById('server-url').textContent = window.location.origin;
+        document.getElementById('server-url-en').textContent = window.location.origin;
+    </script>
+</body>
+</html>
