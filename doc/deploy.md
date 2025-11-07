@@ -26,7 +26,7 @@
 
 ### 导入镜像
 
-如果是离线环境，请提前导入所有docker镜像
+如果是离线环境，请提前导入所有docker镜像(一下镜像列表并不完全)
 
 这些是部分稳定镜像，不常更新( 部分zgsm下镜像来自官方，我们只是备份一份到docker hub)：
 ```
@@ -151,13 +151,15 @@ chat-rag:
 
 ### 修改helm-values
 
- 
+
 1. 如果修改了cotun的运行命名空间，需要修改 values/codebase-server/querier-values.yaml的配置，因为这个配置需要访问cotun,默认命名空间是：costrict-cotun
 
 2. `values/auth/oidc-values.yaml` 修改 clientID clientSecret,登录认证时需要
 3. `values/ai-gateway/quota-manager-values.yaml` 修改signing_key, 用于签名配额
 4. `values/auth/apisix-values.yaml` 修改相关的密钥和密码,以及需要暴露的apisix-gateway端口，这个端口将用于访问costrict的入口。
 5. `values/portal/costrict-ssh-manager-values.yaml` 修改管理容器的密码，管理容器用于查看chat-rag日志，更新portal内容等。
+
+以上配置是最基础的配置，其他更多功能，需要自行决定。
 
 ## 检查配置完整度
 
@@ -172,6 +174,7 @@ python3 helm_deploy.py check
 2 连接到`auth`和`quota-manager`数据库,运行[doc/sql/auth.sql](./sql/auth.sql) 和 [doc/sql/quota-manager.sql](./sql/quota-manager.sql)
 
 3 使用以下命令安装其他全部服务
+
 ```
 python3 helm_deploy.py install --all
 ```
@@ -207,6 +210,8 @@ admin
 
 casdoor具体配置，请根据casdoor官方文档。
 
+<font color='red'>强烈建议修改默认密码</font>
+
 
 ### 配置higress
 
@@ -214,9 +219,11 @@ casdoor具体配置，请根据casdoor官方文档。
 
 我们提供了[配额服务](https://github.com/zgsm-ai/quota-manager) 和 [higress 配额插件](https://github.com/zgsm-ai/higress/blob/main/plugins/wasm-go/extensions/ai-quota/main.go) 请自行获取
 
+<font color='red'>强烈建议修改默认密码</font>
+
 ### Portal
 
-portal是一个使用nginx提供反向代理代理静态文件的服务，里面包含了一些costrict的客户端，错误码，wasm插件等，自行选择配置。
+portal是一个使用nginx提供反向代理代理静态文件的服务，里面包含了一些costrict的客户端程序，错误码，wasm插件，前端页面等静态资源，自行选择配置。
 
 可参考[docker compose 部署方式](https://github.com/zgsm-ai/zgsm-backend-deploy/tree/main/portal/data) 中的内容。
 
