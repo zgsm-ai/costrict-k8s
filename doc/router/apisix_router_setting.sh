@@ -352,7 +352,7 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
 RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "id": "issue-resources",
     "name": "issue-resources",
-    "uris": ["/issue/*","issue-manager"],
+    "uris": ["/issue/*","/issue-manager/*"],
     "upstream_id": "issue-manager"
   }')
 
@@ -440,7 +440,7 @@ RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
         "bearer_only": true,
-        "introspection_interval": 120,
+        "introspection_interval": 240,
         "ssl_verify": false
       },
       "limit-req": {
@@ -677,7 +677,7 @@ RESPONSE=$(curl -i http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE"
         "discovery": "'"$OIDC_DISCOVERY_ADDR"'",
         "introspection_endpoint": "'"$OIDC_INTROSPECTION_ENDPOINT"'",
         "introspection_endpoint_auth_method": "client_secret_basic",
-        "introspection_interval": 120,
+        "introspection_interval": 240,
         "bearer_only": true,
         "scope": "openid profile email"
       },
@@ -704,8 +704,8 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
 RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "uris": ["/tunnel-manager/*"],
     "id": "tunnel-manager",
-    "upstream_id": "tunnel-manager",
     "name": "tunnel-manager",
+    "upstream_id": "tunnel-manager",
     "plugins": {
       "openid-connect": {
         "client_id": "'"$OIDC_CLIENT_ID"'",
@@ -743,8 +743,8 @@ curl -i http://$APISIX_ADDR/apisix/admin/upstreams -H "$AUTH" -H "$TYPE" -X PUT 
 RESPONSE=$(curl -i  http://$APISIX_ADDR/apisix/admin/routes -H "$AUTH" -H "$TYPE" -X PUT -d '{
     "uris": ["/ws", "/ws/*"],
     "id": "cotun",
-    "upstream_id": "cotun",
     "name": "cotun",
+    "upstream_id": "cotun",
     "plugins": {
       "request-id": {
         "header_name": "X-Request-Id",
