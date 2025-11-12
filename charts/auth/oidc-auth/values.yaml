@@ -1,6 +1,6 @@
 # values.yaml
 
-replicaCount: 1
+replicaCount: 2
 
 server:
   # Port number for the server to listen on
@@ -145,7 +145,7 @@ log:
   # Maximum number of old log files to keep
   maxBackups: 10  # Keep 10 backups
 
-  # Maximum number of days to keep old log files
+# Maximum number of days to keep old log files
   maxAge: 30      # Keep for 30 days
 
   # Compress old log files to save disk space
@@ -177,26 +177,31 @@ securityContext: {}
 containerPorts:
   web: 8080
 
-probes:
-  readiness:
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 3
-    type: httpGet
-    path: /health/ready
-    port: 8080
-  liveness:
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    failureThreshold: 5
-    type: httpGet
-    path: /health/ready
-    port: 8080
+# 探活配置
+livenessProbe:
+  enabled: true
+  path: /health/ready
+  port: 8080
+  initialDelaySeconds: 30  # 容器启动后首次执行探针的等待时间
+  periodSeconds: 10        # 执行探针的间隔时间
+  timeoutSeconds: 5        # 探针超时时间
+  failureThreshold: 3      # 连续失败次数
+  successThreshold: 1      # 连续成功次数
+
+readinessProbe:
+  enabled: true
+  path: /health/ready
+  port: 8080
+  initialDelaySeconds: 10   # 容器启动后首次执行探针的等待时间
+  periodSeconds: 15        # 执行探针的间隔时间
+  timeoutSeconds: 5        # 探针超时时间
+  failureThreshold: 3      # 连续失败次数
+  successThreshold: 1      # 连续成功次数
 
 resources:
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: "2"
+    memory: "2Gi"
   requests:
     cpu: 100m
     memory: 128Mi
@@ -210,9 +215,13 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
 
+# 滚动更新配置
 rollingUpdate:
-  maxUnavailable: "25%"
-  maxSurge: "25%"
+  maxUnavailable: 1   # 滚动更新时最多允许的不可用容器数
+  maxSurge: 1         # 滚动更新时最多允许的额外容器数
+
+# 容器终止配置
+terminationGracePeriodSeconds: 150  # 容器终止宽限期（秒），2.5分钟
 
 affinity:
   podAntiAffinity:

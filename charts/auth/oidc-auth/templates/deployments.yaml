@@ -17,14 +17,15 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable | default "25%" }}
-      maxSurge: {{ .Values.rollingUpdate.maxSurge | default "25%" }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}   # 滚动更新时最多允许的不可用容器数
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}               # 滚动更新时最多允许的额外容器数
   template:
     metadata:
       labels:
         app.kubernetes.io/name: {{ .Chart.Name }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}  # 容器终止宽限期
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -61,20 +62,28 @@ spec:
             - name: web-port
               containerPort: {{ .Values.containerPorts.web | default 8080 }}
               protocol: TCP
+          {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.probes.readiness.path | default "/health/ready" }}
-              port: {{ .Values.probes.readiness.port | default 8080 }}
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds | default 10 }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds | default 10 }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold | default 3 }}
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.probes.liveness.path | default "/health/live" }}
-              port: {{ .Values.probes.liveness.port | default 8080 }}
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds | default 30 }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds | default 10 }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold | default 5 }}
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.livenessProbe.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          {{- end }}
           volumeMounts:
             - name: config-volume
               mountPath: /app/config/config.yaml

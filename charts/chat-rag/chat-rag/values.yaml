@@ -16,6 +16,27 @@ rollingUpdate:
 # 容器终止配置
 terminationGracePeriodSeconds: 150  # 容器终止宽限期（秒），2.5分钟
 
+# 探活配置
+livenessProbe:
+  enabled: true
+  path: /health
+  port: 8888
+  initialDelaySeconds: 30  # 容器启动后首次执行探针的等待时间
+  periodSeconds: 10        # 执行探针的间隔时间
+  timeoutSeconds: 5        # 探针超时时间
+  failureThreshold: 3      # 连续失败次数
+  successThreshold: 1      # 连续成功次数
+
+readinessProbe:
+  enabled: true
+  path: /ready
+  port: 8888
+  initialDelaySeconds: 10   # 容器启动后首次执行探针的等待时间
+  periodSeconds: 15        # 执行探针的间隔时间
+  timeoutSeconds: 5        # 探针超时时间
+  failureThreshold: 3      # 连续失败次数
+  successThreshold: 1      # 连续成功次数
+
 # 镜像配置
 image:
   repository: zgsm/chat-rag
