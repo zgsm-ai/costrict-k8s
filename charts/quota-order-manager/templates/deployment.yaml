@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quota-order-manager.fullname" . }}
+  namespace: {{ .Values.app.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "quota-order-manager.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quota-order-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quota-order-manager.selectorLabels" . | nindent 8 }}
+        version: {{ .Values.app.version | quote }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.serviceAccount.name }}
+      serviceAccountName: {{ . }}
+      {{- end }}
+      
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: {{ .Values.app.command | toYaml | nindent 10 }}
+        args: {{ .Values.app.args | toYaml | nindent 10 }}
+        
+        ports:
+        {{- range .Values.ports }}
+        - name: {{ .name }}
+          containerPort: {{ .containerPort }}
+          protocol: {{ .protocol }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+        
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        
+        lifecycle:
+          {{- toYaml .Values.lifecycle | nindent 10 }}
+        
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+          readOnly: true
+      
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ include "quota-order-manager.fullname" . }}-config
+      
+      restartPolicy: {{ .Values.restartPolicy }}
+      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

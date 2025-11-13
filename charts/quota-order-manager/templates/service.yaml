@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "quota-order-manager.fullname" . }}-service
+  namespace: {{ .Values.app.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "quota-order-manager.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "quota-order-manager.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: {{ .Values.service.name }}
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: {{ .Values.service.protocol }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
