@@ -1,0 +1,19 @@
+apiVersion: v2
+name: quota-order-manager
+description: A Helm chart for quota-order-manager application
+type: application
+version: 1.0.0
+appVersion: v1.0.0
+keywords:
+  - quota
+  - order
+  - manager
+home: https://github.com/costrict/quota-order-manager
+sources:
+  - https://github.com/costrict/quota-order-manager
+maintainers:
+  - name: Costrict Team
+    email: team@costrict.com
+annotations:
+  category: application
+  licenses: Apache-2.0
