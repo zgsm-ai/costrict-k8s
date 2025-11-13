@@ -90,30 +90,6 @@ securityContext:
 
 # 配置文件内容
 config:
-  configYaml: |
-    # 应用程序配置
-    environment: production
-    port: "8098"
-    log_level: info
-    
-    # 数据库配置
-    database:
-      host: postgres-service
-      port: "5432"
-      user: postgres
-      password: costrict
-      db_name: quota_order_manager
-      ssl_mode: disable
-    
-    # OIDC认证服务配置
-    oidc:
-      base_url: "http://oidc-auth.costrict.svc.cluster.local:8080"
-    
-    # Quota Manager API配置
-    quota_manager:
-      base_url: "http://quota-manager-svc.costrict.svc.cluster.local:8080"
-      timeout: "30s"
-      auth_header: "authorization"
 
 # 节点选择器
 nodeSelector:
