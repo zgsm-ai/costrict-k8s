@@ -1,0 +1,152 @@
+# Default values for quota-order-manager.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# 全局配置
+global:
+  imagePullSecrets: []
+  imageRegistry: ""
+
+# 副本数量
+replicaCount: 1
+
+# 镜像配置
+image:
+  repository: zgsm/quota-order-manager
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# 应用配置
+app:
+  name: quota-order-manager
+  namespace: costrict
+  version: v1.0.0
+  command: ["./quota-order-manager"]
+  args: ["serve", "-c", "/app/config.yaml"]
+  
+# 服务配置
+service:
+  type: ClusterIP
+  port: 8098
+  targetPort: 8098
+  protocol: TCP
+  name: http
+  sessionAffinity: None
+
+# 容器端口配置
+ports:
+  - name: http
+    containerPort: 8098
+    protocol: TCP
+
+# 资源限制
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# 健康检查配置
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8098
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8098
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# 生命周期配置
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 5"]
+
+# 安全上下文
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+# 配置文件内容
+config:
+  configYaml: |
+    # 应用程序配置
+    environment: production
+    port: "8098"
+    log_level: info
+    
+    # 数据库配置
+    database:
+      host: postgres-service
+      port: "5432"
+      user: postgres
+      password: costrict
+      db_name: quota_order_manager
+      ssl_mode: disable
+    
+    # OIDC认证服务配置
+    oidc:
+      base_url: "http://oidc-auth.costrict.svc.cluster.local:8080"
+    
+    # Quota Manager API配置
+    quota_manager:
+      base_url: "http://quota-manager-svc.costrict.svc.cluster.local:8080"
+      timeout: "30s"
+      auth_header: "authorization"
+
+# 节点选择器
+nodeSelector:
+  kubernetes.io/os: linux
+
+# 容忍度
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# 亲和性
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - quota-order-manager
+          topologyKey: kubernetes.io/hostname
+
+# 重启策略
+restartPolicy: Always
+
+# 服务账户配置
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
